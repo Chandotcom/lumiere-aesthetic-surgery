@@ -46,6 +46,10 @@ export function AdminNav({ role }: { role: StaffRole }) {
     <nav aria-label="Admin">
       <ul className="flex flex-wrap gap-1 md:flex-col">
         {items
+          // Editors have no KPI dashboard; their /admin is the website overview instead.
+          .map((i) =>
+            i.href === "/admin" && !can(role, "dashboard") ? { ...i, label: "Overview", permission: "content" as const } : i,
+          )
           .filter((i) => can(role, i.permission))
           .map(({ href, label, icon: Icon }) => {
             const active = href === current;

@@ -80,6 +80,11 @@ Middleware is now `src/proxy.ts`. Dynamic data (DB, `auth()`) must sit inside `<
   - **Staff** (`/admin/users`, admin only): lists Clerk users, invites by email with a role (Clerk invitations, `publicMetadata.role`), changes roles and removes access (`role: null`).
     - You can’t change your own role, and the last admin can’t be demoted.
     - Audit entries never store emails, only Clerk ids.
+  - **Start screen** (`/admin`, role-aware):
+    - Front desk: KPIs.
+    - Editors: `WebsiteOverview` (drafts, pending reviews and gallery cases with their first `publishBlockers` reason, recently published, totals, quick actions), with "Overview" in the nav.
+    - Admins: KPIs plus a `WebsiteStrip`, with the full overview at `/admin?view=website`.
+    - Data comes from `getWebsiteOverview()` (`src/lib/admin/overview.ts`). Editor URLs and names come from `editorHref()` and `documentLabel()` (`src/lib/admin/editor-links.ts`), shared with the activity log.
   - **Activity** (`/admin/activity`, admin only): `audit_log` with person, section and date filters (clinic time) and 50 rows per page. `src/lib/admin/activity.ts` maps actions to sentences and entities to links. When you add a `logAudit` action, add its sentence there.
   - Inside a try/catch, call `await connection()` *before* the `try`, because during prerendering it rejects on purpose and must not be caught.
 - **Email notifications** (`src/lib/email/`, Resend REST API, no SDK). `submitConsultation` calls `after(() => notifyNewLead(...))`, so emails never slow the form or block the lead.

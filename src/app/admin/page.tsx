@@ -1,46 +1,83 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { DbNotice, hasDatabase } from "@/components/admin/db-notice";
 import { SourceChart, WeeklyLeadsChart } from "@/components/admin/kpi-charts";
+import { WebsiteOverview, WebsiteStrip } from "@/components/admin/website-overview";
 import { Skeleton } from "@/components/ui/skeleton";
 import { capitalize, formatDuration, formatPercent, formatWeek } from "@/lib/admin/format";
 import { getKpis, type Kpis } from "@/lib/admin/kpis";
-import { can, homeFor } from "@/lib/admin/roles";
+import { getWebsiteOverview } from "@/lib/admin/overview";
+import { can } from "@/lib/admin/roles";
 import { getStaff } from "@/lib/admin/session";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-export default function AdminHome() {
+/**
+ * Start screen, by role: front desk sees the enquiry KPIs, editors see the website overview (no
+ * patient data), and admins see the KPIs with a one-line website summary on top.
+ */
+export default function AdminHome({ searchParams }: PageProps<"/admin">) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-3xl">Dashboard</h1>
-        <p className="mt-1 text-sm text-stone">How quickly enquiries are answered, and how they turn into patients.</p>
-      </div>
-      <Suspense fallback={<DashboardSkeleton />}>
-        <Dashboard />
-      </Suspense>
+    <Suspense fallback={<DashboardSkeleton />}>
+      <Home searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+function Header({ title, text }: { title: string; text: string }) {
+  return (
+    <div>
+      <h1 className="font-heading text-3xl">{title}</h1>
+      <p className="mt-1 text-sm text-stone">{text}</p>
     </div>
   );
 }
 
-async function loadKpis() {
+async function load(withKpis: boolean, withWebsite: boolean) {
   await connection();
-  return getKpis();
+  const [kpis, website] = await Promise.all([
+    withKpis ? getKpis() : null,
+    withWebsite ? getWebsiteOverview() : null,
+  ]);
+  return { kpis, website };
 }
 
-async function Dashboard() {
-  // Enquiry KPIs are front-desk data; other roles start in their own section.
+async function Home({ searchParams }: Pick<PageProps<"/admin">, "searchParams">) {
   const staff = await getStaff();
-  if (staff && !can(staff.role, "dashboard")) redirect(homeFor(staff.role));
+  const withWebsite = can(staff?.role, "content");
+  // Admins can switch to the editors' full website overview with ?view=website.
+  const websiteOnly = withWebsite && (await searchParams).view === "website";
+  const withKpis = can(staff?.role, "dashboard") && !websiteOnly;
   if (!hasDatabase()) return <DbNotice />;
-  const kpis = await loadKpis();
+  const { kpis, website } = await load(withKpis, withWebsite);
 
+  if (!kpis) {
+    return (
+      <div className="space-y-6">
+        <Header title="Website overview" text="What’s waiting for you, and what changed recently on the website." />
+        {can(staff?.role, "dashboard") && (
+          <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-bronze hover:underline">
+            Back to the enquiries dashboard
+          </Link>
+        )}
+        {website && <WebsiteOverview data={website} />}
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-6">
+      <Header title="Dashboard" text="How quickly enquiries are answered, and how they turn into patients." />
+      {website && <WebsiteStrip data={website} />}
+      <Dashboard kpis={kpis} />
+    </div>
+  );
+}
+
+function Dashboard({ kpis }: { kpis: Kpis }) {
   return (
     <div className="space-y-6">
       {kpis.waiting > 0 && (

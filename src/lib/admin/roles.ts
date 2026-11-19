@@ -46,7 +46,7 @@ export function can(role: StaffRole | null | undefined, permission: Permission):
   return Boolean(role && grants[role].includes(permission));
 }
 
-/** Where to land after sign-in: the first section this role can open. */
-export function homeFor(role: StaffRole) {
-  return can(role, "dashboard") ? "/admin" : "/admin/content";
+/** Start page for a role. `/admin` adapts: KPIs for enquiry roles, the website overview for editors. */
+export function homeFor() {
+  return "/admin";
 }

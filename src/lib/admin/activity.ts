@@ -1,6 +1,7 @@
 import "server-only";
 import { and, count, desc, eq, gte, inArray, lt, type SQL } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { documentLabel, editorHref } from "./editor-links";
 
 const { auditLog } = schema;
 
@@ -8,7 +9,7 @@ const { auditLog } = schema;
 export const activitySections = {
   leads: { label: "Leads", entities: ["lead"] },
   appointments: { label: "Appointments", entities: ["appointment"] },
-  content: { label: "Pages & journal", entities: ["procedure", "home", "settings", "seo", "post"] },
+  content: { label: "Pages & journal", entities: ["procedure", "home", "settings", "seo", "post", "page"] },
   media: { label: "Media", entities: ["media"] },
   gallery: { label: "Gallery", entities: ["gallery_item"] },
   reviews: { label: "Reviews", entities: ["review"] },
@@ -64,6 +65,8 @@ const verbs: Record<string, string> = {
   "content.revision_restored": "Restored an earlier version",
   "content.post_created": "Created a journal post",
   "content.post_deleted": "Deleted a journal post",
+  "content.page_created": "Created a page",
+  "content.page_deleted": "Deleted a page",
   "media.uploaded": "Uploaded an image",
   "media.alt_updated": "Edited image alt text",
   "media.deleted": "Deleted an image",
@@ -98,12 +101,6 @@ export function describeAction(action: string) {
   return { verb: verbs[key] ?? humanize(key), detail: detail ? humanize(detail) : null };
 }
 
-const contentPages: Record<string, string> = {
-  home: "/admin/content/home",
-  settings: "/admin/content/settings",
-  seo: "/admin/content/seo",
-};
-
 /** A readable target and, where one exists, a link to it. Never includes patient data. */
 export function describeTarget(entity: string, entityId: string | null): { label: string; href?: string } {
   const id = entityId ?? "";
@@ -119,13 +116,14 @@ export function describeTarget(entity: string, entityId: string | null): { label
     case "media":
       return { label: "Media library", href: "/admin/media" };
     case "procedure":
-      return { label: `Procedure: ${id.split("#")[0]}`, href: `/admin/content/procedures/${id.split("#")[0]}` };
     case "post":
-      return { label: `Journal: ${id.split("#")[0]}`, href: `/admin/content/journal/${id.split("#")[0]}` };
+    case "page":
     case "home":
     case "settings":
-    case "seo":
-      return { label: { home: "Homepage", settings: "Contact details", seo: "SEO" }[entity], href: contentPages[entity] };
+    case "seo": {
+      const key = id.split("#")[0]; // revision restores log "<key>#<revision id>"
+      return { label: documentLabel(entity, key), href: editorHref(entity, key) };
+    }
     case "staff":
     case "staff_invitation":
       return { label: entity === "staff" ? "Staff account" : "Invitation", href: "/admin/users" };

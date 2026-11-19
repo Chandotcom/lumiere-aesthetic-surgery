@@ -18,7 +18,7 @@ export async function RequirePermission({ permission, children }: { permission: 
         {staff ? `Your role (${roleLabel[staff.role]}) doesn’t include it.` : "Your account doesn’t have a staff role."} An
         admin can change your role under Staff.
       </p>
-      {staff && <ButtonLink href={homeFor(staff.role)} variant="outline">Go to your start page</ButtonLink>}
+      {staff && <ButtonLink href={homeFor()} variant="outline">Go to your start page</ButtonLink>}
     </div>
   );
 }
