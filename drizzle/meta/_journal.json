@@ -36,6 +36,20 @@
       "when": 1795072438778,
       "tag": "0004_gallery_manager",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795073737898,
+      "tag": "0005_reviews_drop_procedure_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795073746993,
+      "tag": "0006_reviews_manager",
+      "breakpoints": true
     }
   ]
 }

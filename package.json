@@ -16,7 +16,9 @@
     "db:seed:demo": "tsx src/db/seed-demo.ts",
     "db:demo:clear": "tsx src/db/seed-demo.ts --clear",
     "db:seed:gallery": "tsx src/db/seed-gallery.ts",
-    "db:gallery:clear": "tsx src/db/seed-gallery.ts --clear"
+    "db:gallery:clear": "tsx src/db/seed-gallery.ts --clear",
+    "db:seed:reviews": "tsx src/db/seed-reviews.ts",
+    "db:reviews:clear": "tsx src/db/seed-reviews.ts --clear"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

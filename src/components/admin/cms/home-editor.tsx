@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { homeSchema, type HomeContent } from "@/lib/cms/schemas";
@@ -84,26 +85,16 @@ export function HomeEditor({ initial, state }: { initial: F; state: ContentState
 
       <Section
         title="Patient stories"
-        description="Also shown on the About page. Always labelled as sample reviews on this demo. Only publish genuine reviews with the patient's permission."
+        description="Also shown on the About page."
       >
         <TextField<F> name="testimonials.heading" label="Heading" maxLength={120} hint={ACCENT_HINT} />
-        <ListField<F, "testimonials.items">
-          name="testimonials.items"
-          label="Stories"
-          itemLabel="Story"
-          newItem={{ quote: "", name: "", procedure: "", image: { src: "", alt: "" } }}
-          max={6}
-          renderItem={(i) => (
-            <>
-              <TextField<F> name={`testimonials.items.${i}.quote`} label="Quote" multiline rows={4} maxLength={400} />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <TextField<F> name={`testimonials.items.${i}.name`} label="Name" maxLength={40} hint="First name and initial only." />
-                <TextField<F> name={`testimonials.items.${i}.procedure`} label="Procedure" maxLength={60} />
-              </div>
-              <ImageField<F> name={`testimonials.items.${i}.image`} label="Photo" />
-            </>
-          )}
-        />
+        <p className="text-sm text-stone">
+          The reviews themselves are managed in{" "}
+          <Link href="/admin/reviews" className="text-bronze hover:underline">
+            Reviews
+          </Link>
+          .
+        </p>
       </Section>
 
       <Section title="General FAQ" description="Shown on the homepage and the consultation page, and published as FAQ structured data.">

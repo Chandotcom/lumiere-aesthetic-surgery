@@ -88,27 +88,44 @@ export const journey = [
   { title: "Recovery & beyond", text: "Scheduled follow-ups, a direct line to the team, and check-ins for a full year." },
 ];
 
-// ── Testimonials (labelled “Sample reviews” in the UI — FTC rules) ──────
-export type Testimonial = { quote: string; name: string; procedure: string; image: Img };
+// ── Sample reviews (labelled “Sample review” in the UI — FTC rules) ──────
+// Seeded into the `reviews` table by `pnpm db:seed:reviews`, and shown as a fallback when the
+// database can’t be read. `procedureSlug` matches src/lib/content/procedures.ts.
+export type Testimonial = { quote: string; name: string; procedureSlug: string; rating: number; image?: Img };
 
 export const testimonials: Testimonial[] = [
   {
     quote: "I felt listened to from the very first visit. The result looks like me on my best day — nobody can tell, they just say I look rested.",
     name: "Sarah M.",
-    procedure: "Facelift",
+    procedureSlug: "facelift",
+    rating: 5,
     image: { src: unsplash("1508214751196-bcfd4ca60f91"), alt: "Smiling woman outdoors in warm evening light" },
   },
   {
     quote: "Every question was answered before I asked it. Recovery was exactly as described, and the team checked on me constantly.",
     name: "Jessica R.",
-    procedure: "Breast augmentation",
+    procedureSlug: "breast-augmentation",
+    rating: 5,
     image: { src: unsplash("1494790108377-be9c29b29330"), alt: "Laughing woman with long dark hair in a red sweater" },
   },
   {
     quote: "Calm, honest, and never pushy. They even talked me out of a procedure I didn’t need. That’s exactly why I trust them.",
     name: "Amara O.",
-    procedure: "Rhinoplasty",
+    procedureSlug: "rhinoplasty",
+    rating: 5,
     image: { src: unsplash("1524504388940-b1c1722653e1"), alt: "Portrait of a woman with long hair against a dark background" },
+  },
+  {
+    quote: "Swelling took longer to settle than I hoped, so be patient. The team was honest about that from the start, and I love the result now.",
+    name: "Priya K.",
+    procedureSlug: "eyelid-surgery",
+    rating: 4,
+  },
+  {
+    quote: "Booking a consultation took a couple of weeks, but it was worth the wait. Clear pricing, no surprises, and a lovely recovery team.",
+    name: "Dana L.",
+    procedureSlug: "tummy-tuck",
+    rating: 4,
   },
 ];
 

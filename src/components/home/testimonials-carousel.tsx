@@ -4,19 +4,14 @@ import { useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Container, Eyebrow, Heading } from "@/components/ds";
-import type { HomeContent } from "@/lib/cms/schemas";
+import type { PublicReview } from "@/lib/reviews/meta";
 import { cn } from "@/lib/utils";
 
 /** One large quote at a time, cross-fading. Manual controls only (no auto-advance: WCAG 2.2.2). */
-export function TestimonialsCarousel({
-  testimonials,
-  heading,
-}: {
-  testimonials: HomeContent["testimonials"]["items"];
-  heading: React.ReactNode;
-}) {
+export function TestimonialsCarousel({ reviews, heading }: { reviews: PublicReview[]; heading: React.ReactNode }) {
   const [i, setI] = useState(0);
-  const n = testimonials.length;
+  const n = reviews.length;
+  const anySample = reviews.some((r) => r.isSample);
   const go = (d: number) => setI((v) => (v + d + n) % n);
 
   return (
@@ -29,7 +24,7 @@ export function TestimonialsCarousel({
               {heading}
             </Heading>
           </div>
-          <div className="flex gap-2">
+          <div className={cn("flex gap-2", n < 2 && "hidden")}>
             <button
               type="button"
               onClick={() => go(-1)}
@@ -51,25 +46,33 @@ export function TestimonialsCarousel({
 
         <div className="grid gap-10 md:grid-cols-12 md:gap-8">
           <div className="relative aspect-[4/5] overflow-hidden md:col-span-4">
-            {testimonials.map((t, k) => (
-              <Image
-                key={`${k}-${t.name}`}
-                src={t.image.src}
-                alt={k === i ? t.image.alt : ""}
-                fill
-                sizes="(min-width: 840px) 30vw, 100vw"
-                className={cn(
-                  "object-cover transition-[opacity,transform] duration-1000 ease-luxe",
-                  k === i ? "scale-100 opacity-100" : "scale-105 opacity-0",
-                )}
-              />
-            ))}
+            {reviews.map((t, k) => {
+              const fade = cn(
+                "transition-[opacity,transform] duration-1000 ease-luxe",
+                k === i ? "scale-100 opacity-100" : "scale-105 opacity-0",
+              );
+              return t.image ? (
+                <Image
+                  key={t.id}
+                  src={t.image.src}
+                  alt={k === i ? t.image.alt : ""}
+                  fill
+                  sizes="(min-width: 840px) 30vw, 100vw"
+                  className={cn("object-cover", fade)}
+                />
+              ) : (
+                // No photo: a quiet monogram panel in the same frame
+                <div key={t.id} aria-hidden className={cn("absolute inset-0 grid place-items-center bg-cream", fade)}>
+                  <span className="font-heading text-[7rem] font-light text-bronze/70">{t.name.charAt(0)}</span>
+                </div>
+              );
+            })}
           </div>
 
           <div className="grid md:col-span-7 md:col-start-6" aria-live="polite">
-            {testimonials.map((t, k) => (
+            {reviews.map((t, k) => (
               <figure
-                key={`${k}-${t.name}`}
+                key={t.id}
                 aria-hidden={k !== i}
                 className={cn(
                   "col-start-1 row-start-1 flex flex-col justify-between gap-10 transition-[opacity,transform] duration-700 ease-luxe",
@@ -87,11 +90,15 @@ export function TestimonialsCarousel({
                 <figcaption className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
                   <span>
                     <span className="block font-medium text-ink">{t.name}</span>
-                    <span className="text-sm text-stone">{t.procedure} patient</span>
+                    <span className="text-sm text-stone">
+                      {t.procedure ? `${t.procedure} patient` : "Patient"}
+                      {t.isSample && " · Sample review"}
+                    </span>
                   </span>
                   <span className="flex items-center gap-4 text-sm text-stone">
-                    <span className="tracking-[0.2em] text-bronze" aria-label="5 out of 5 stars">
-                      ★★★★★
+                    <span className="tracking-[0.2em]" role="img" aria-label={`${t.rating} out of 5 stars`}>
+                      <span className="text-bronze">{"★".repeat(t.rating)}</span>
+                      <span className="text-line">{"★".repeat(5 - t.rating)}</span>
                     </span>
                     <span className="numeral">
                       {String(k + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
@@ -104,8 +111,10 @@ export function TestimonialsCarousel({
         </div>
 
         <p className="mt-10 text-xs text-stone">
-          Sample reviews for this demo practice. Reviews are never filtered or edited; individual
-          results vary.
+          {anySample && "Sample reviews for this demo practice. "}
+          We publish reviews whatever their rating and never edit them. We only remove reviews that share
+          personal health details, aren’t from a patient, or that the patient asks us to take down.
+          Individual results vary.
         </p>
       </Container>
     </section>

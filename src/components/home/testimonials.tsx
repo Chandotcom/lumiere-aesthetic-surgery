@@ -1,9 +1,14 @@
 import { Accent } from "@/components/ds/accent";
 import { getHomeContent } from "@/lib/cms/home";
+import { getPublishedReviews } from "@/lib/reviews/read";
 import { TestimonialsCarousel } from "./testimonials-carousel";
 
-/** Patient stories from the homepage content (editable in the admin). Always labelled as samples. */
+/**
+ * Published patient reviews (managed in Admin → Reviews), under the heading from the homepage
+ * editor. Renders nothing when no reviews are published.
+ */
 export async function Testimonials() {
-  const { testimonials } = await getHomeContent();
-  return <TestimonialsCarousel testimonials={testimonials.items} heading={<Accent text={testimonials.heading} />} />;
+  const [{ testimonials }, reviews] = await Promise.all([getHomeContent(), getPublishedReviews()]);
+  if (reviews.length === 0) return null;
+  return <TestimonialsCarousel reviews={reviews} heading={<Accent text={testimonials.heading} />} />;
 }

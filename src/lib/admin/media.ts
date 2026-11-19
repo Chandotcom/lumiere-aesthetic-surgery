@@ -3,7 +3,7 @@ import { desc, eq, or, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { MediaItem } from "./media-meta";
 
-const { media, contentDocuments } = schema;
+const { media, contentDocuments, reviews } = schema;
 
 /**
  * Credentials for the PUBLIC media store (site imagery). Patient photos use a separate private store.
@@ -36,10 +36,14 @@ export async function getMedia(id: number) {
   return row ?? null;
 }
 
-/** Content documents (draft or published) that still reference this image URL. */
+/** Content documents (draft or published) and reviews that still reference this image URL. */
 export async function findMediaUsage(url: string) {
   const pattern = `%${url.replace(/[\\%_]/g, "\\$&")}%`;
-  return getDb()
+  const usedByReviews = await getDb()
+    .select({ name: reviews.name })
+    .from(reviews)
+    .where(eq(reviews.photoUrl, url));
+  const docs = await getDb()
     .select({ kind: contentDocuments.kind, key: contentDocuments.key })
     .from(contentDocuments)
     .where(
@@ -48,4 +52,5 @@ export async function findMediaUsage(url: string) {
         sql`${contentDocuments.published}::text like ${pattern}`,
       ),
     );
+  return [...docs, ...usedByReviews.map((r) => ({ kind: "review", key: r.name }))];
 }

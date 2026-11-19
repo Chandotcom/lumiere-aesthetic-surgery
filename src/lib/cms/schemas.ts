@@ -106,20 +106,8 @@ export const homeSchema = z.object({
     image: imageSchema,
     steps: z.array(z.object({ title: text(60, "Title"), text: text(240, "Text") })).min(1).max(6),
   }),
-  testimonials: z.object({
-    heading: heading(),
-    items: z
-      .array(
-        z.object({
-          quote: text(400, "Quote"),
-          name: text(40, "Name"),
-          procedure: text(60, "Procedure"),
-          image: imageSchema,
-        }),
-      )
-      .min(1)
-      .max(6),
-  }),
+  // The reviews themselves are managed in Admin → Reviews (`reviews` table).
+  testimonials: z.object({ heading: heading() }),
   faq: z.object({
     heading: heading(),
     items: z.array(qa).min(1).max(12),

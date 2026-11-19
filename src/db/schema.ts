@@ -166,17 +166,27 @@ export const galleryPhotos = pgTable(
   (t) => [uniqueIndex("gallery_photos_slot_idx").on(t.itemId, t.view, t.side)],
 );
 
-export const reviews = pgTable("reviews", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  rating: integer("rating").notNull(),
-  body: text("body").notNull(),
-  procedureId: integer("procedure_id").references(() => procedures.id),
-  verified: boolean("verified").default(false).notNull(),
-  isSample: boolean("is_sample").default(true).notNull(), // demo label "Sample review"
-  status: moderationStatus("status").default("pending").notNull(),
-  ...timestamps,
-});
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(), // first name + initial only
+    rating: integer("rating").notNull(), // 1-5
+    body: text("body").notNull(),
+    procedureSlug: text("procedure_slug"), // optional, from src/lib/content/procedures.ts
+    photoUrl: text("photo_url"), // optional reviewer portrait, from the media library
+    photoAlt: text("photo_alt"),
+    source: text("source").default("clinic").notNull(), // clinic | google | email | other
+    verified: boolean("verified").default(false).notNull(), // staff confirmed a real patient
+    isSample: boolean("is_sample").default(false).notNull(), // demo label "Sample review"
+    status: moderationStatus("status").default("pending").notNull(),
+    hiddenReason: text("hidden_reason"), // why a review was removed (policy, never the rating)
+    publishedAt: timestamp("published_at", { withTimezone: true }), // first publication; locks quote + rating
+    createdBy: text("created_by"),
+    ...timestamps,
+  },
+  (t) => [index("reviews_status_idx").on(t.status, t.publishedAt)],
+);
 
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),

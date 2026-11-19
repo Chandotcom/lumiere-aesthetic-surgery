@@ -1,5 +1,5 @@
 import "server-only";
-import { credentials, faqs, images, journey, stats, testimonials } from "@/lib/content/home";
+import { credentials, faqs, images, journey, stats } from "@/lib/content/home";
 import { site } from "@/lib/site";
 import { readContent } from "./read";
 import { homeSchema, type HomeContent } from "./schemas";
@@ -35,10 +35,7 @@ export function homeDefaults(): HomeContent {
       image: { ...images.journey },
       steps: journey.map((s) => ({ ...s })),
     },
-    testimonials: {
-      heading: "In their *own words.*",
-      items: testimonials.map((t) => ({ ...t, image: { ...t.image } })),
-    },
+    testimonials: { heading: "In their *own words.*" },
     faq: {
       heading: "Good questions, *honest answers.*",
       items: faqs.map((f) => ({ ...f })),
