@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const result = await handleUploadPresigned({
       body,
       request,
-      webhookPublicKey: process.env.BLOB_WEBHOOK_PUBLIC_KEY || "callbacks-disabled",
+      webhookPublicKey: process.env.GALLERY_WEBHOOK_PUBLIC_KEY || "callbacks-disabled",
       getSignedToken: async (pathname) => {
         if (!(await getStaff())) throw new Error("Unauthorized");
         if (!/^gallery\/cases\/\d+\/[\w.-]+$/.test(pathname) || !pathname.startsWith(GALLERY_FOLDER)) {
