@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: "Edit journal post" };
 export default function EditPostPage({ params }: PageProps<"/admin/content/journal/[slug]">) {
   return (
     <div className="space-y-6">
-      <BackToContent />
+      <BackToContent to="journal" />
       <Suspense fallback={<Skeleton className="h-[40rem] w-full" />}>
         <Editor params={params} />
       </Suspense>

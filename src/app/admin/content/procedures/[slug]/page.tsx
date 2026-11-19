@@ -22,7 +22,7 @@ export default function EditProcedurePage({ params }: PageProps<"/admin/content/
     <div className="space-y-6">
       <Link href="/admin/content" className="inline-flex items-center gap-1.5 text-sm text-stone hover:text-ink">
         <ArrowLeft className="size-4" aria-hidden />
-        Site content
+        Pages
       </Link>
       <Suspense fallback={<Skeleton className="h-[40rem] w-full" />}>
         <Editor params={params} />

@@ -152,7 +152,7 @@ function DeletePostButton({ slug }: { slug: string }) {
             const res = await deletePost(slug);
             if (res.ok) {
               toast.success("Post deleted");
-              router.push("/admin/content#journal");
+              router.push("/admin/content/journal");
             } else toast.error(res.error);
           })
         }

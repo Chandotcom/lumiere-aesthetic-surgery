@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "New journal post" };
 export default function NewPostPage() {
   return (
     <div className="space-y-6">
-      <BackToContent />
+      <BackToContent to="journal" />
       <header className="space-y-1">
         <h1 className="font-heading text-3xl">New journal post</h1>
         <p className="text-sm text-stone">

@@ -2,24 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, FilePenLine, Inbox, LayoutDashboard } from "lucide-react";
+import { CalendarDays, FilePenLine, Inbox, LayoutDashboard, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Add sections here as they're built (appointments, gallery, reviews, journal, settings).
+// Add sections here as they're built (gallery, reviews, settings).
 const items = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/leads", label: "Leads", icon: Inbox, exact: false },
-  { href: "/admin/appointments", label: "Appointments", icon: CalendarDays, exact: false },
-  { href: "/admin/content", label: "Site content", icon: FilePenLine, exact: false },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/leads", label: "Leads", icon: Inbox },
+  { href: "/admin/appointments", label: "Appointments", icon: CalendarDays },
+  { href: "/admin/content", label: "Pages", icon: FilePenLine },
+  { href: "/admin/content/journal", label: "Journal", icon: Newspaper },
 ] as const;
+
+/** The item whose href is the longest prefix of the current path (so Journal wins over Pages). */
+function activeHref(pathname: string) {
+  return items
+    .map((i) => i.href)
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0];
+}
 
 export function AdminNav() {
   const pathname = usePathname();
+  const current = activeHref(pathname);
   return (
     <nav aria-label="Admin">
-      <ul className="flex gap-1 md:flex-col">
-        {items.map(({ href, label, icon: Icon, exact }) => {
-          const active = exact ? pathname === href : pathname.startsWith(href);
+      <ul className="flex flex-wrap gap-1 md:flex-col">
+        {items.map(({ href, label, icon: Icon }) => {
+          const active = href === current;
           return (
             <li key={href}>
               <Link

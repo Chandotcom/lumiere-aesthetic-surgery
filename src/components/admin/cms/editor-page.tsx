@@ -46,11 +46,14 @@ export function EditorPage({
   );
 }
 
-export function BackToContent() {
+export function BackToContent({ to = "pages" }: { to?: "pages" | "journal" }) {
   return (
-    <Link href="/admin/content" className="inline-flex items-center gap-1.5 text-sm text-stone hover:text-ink">
+    <Link
+      href={to === "journal" ? "/admin/content/journal" : "/admin/content"}
+      className="inline-flex items-center gap-1.5 text-sm text-stone hover:text-ink"
+    >
       <ArrowLeft className="size-4" aria-hidden />
-      Site content
+      {to === "journal" ? "Journal" : "Pages"}
     </Link>
   );
 }
