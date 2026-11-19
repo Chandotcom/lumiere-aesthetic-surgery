@@ -78,6 +78,7 @@ export function TextField<T extends FieldValues>({
   multiline,
   rows = 3,
   maxLength,
+  placeholder,
   className,
 }: {
   name: Path<T>;
@@ -86,13 +87,14 @@ export function TextField<T extends FieldValues>({
   multiline?: boolean;
   rows?: number;
   maxLength?: number;
+  placeholder?: string;
   className?: string;
 }) {
   const id = useId();
   const { register } = useFormContext<T>();
   const error = useFieldError(name);
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
-  const common = { id, "aria-invalid": !!error || undefined, "aria-describedby": describedBy, maxLength };
+  const common = { id, "aria-invalid": !!error || undefined, "aria-describedby": describedBy, maxLength, placeholder };
   return (
     <FieldShell id={id} label={label} hint={hint} error={error} className={className}>
       {multiline ? <Textarea rows={rows} {...common} {...register(name)} /> : <Input {...common} {...register(name)} />}

@@ -84,6 +84,7 @@ async function Editor({ params }: Pick<PageProps<"/admin/content/procedures/[slu
           // Remount with fresh values whenever the stored versions change (save, discard, restore).
           key={`${doc?.draftUpdatedAt?.getTime() ?? 0}-${doc?.publishedAt?.getTime() ?? 0}`}
           slug={slug}
+          name={procedure.name}
           initial={initial}
           state={state}
         />

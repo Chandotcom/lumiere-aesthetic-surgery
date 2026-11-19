@@ -44,6 +44,11 @@ export const procedureFieldsSchema = z.object({
     .min(1, "Add at least one step.")
     .max(8),
   faqs: z.array(qa).min(1, "Add at least one question.").max(12),
+  /** Optional. Empty strings mean "use the automatic title / the summary". */
+  seo: z.object({
+    title: z.string().trim().max(70, "Title is limited to 70 characters."),
+    description: z.string().trim().max(220, "Description is limited to 220 characters."),
+  }),
 });
 
 export type ProcedureFields = z.infer<typeof procedureFieldsSchema>;

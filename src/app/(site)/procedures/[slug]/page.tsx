@@ -12,7 +12,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { ProcedureCard } from "@/components/procedures/procedure-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { galleryCases } from "@/lib/content/gallery";
-import { categories, formatPrice, monthlyFrom, procedures } from "@/lib/content/procedures";
+import { categories, defaultProcedureTitle, formatPrice, monthlyFrom, procedures } from "@/lib/content/procedures";
 import { getProcedureBySlug, getProcedures } from "@/lib/cms/procedures";
 import { breadcrumbSchema, procedureSchema } from "@/lib/seo/schema";
 import { site } from "@/lib/site";
@@ -26,8 +26,8 @@ export async function generateMetadata({ params }: PageProps<"/procedures/[slug]
   const p = await getProcedureBySlug((await params).slug);
   if (!p) return {};
   return {
-    title: `${p.name} — Cost, Recovery & Results`,
-    description: p.summary,
+    title: p.seoTitle ?? defaultProcedureTitle(p.name),
+    description: p.seoDescription ?? p.summary,
     alternates: { canonical: `/procedures/${p.slug}` },
     openGraph: { images: [{ url: `${p.image.src}?w=1200&h=630&fit=crop`, alt: p.image.alt }] },
   };

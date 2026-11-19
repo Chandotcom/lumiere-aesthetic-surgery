@@ -22,7 +22,13 @@ export type Procedure = {
   idealFor: string[];
   timeline: { when: string; what: string }[];
   faqs: { question: string; answer: string }[];
+  /** Optional search-engine overrides (set in the admin). Empty = automatic title / the summary. */
+  seoTitle?: string;
+  seoDescription?: string;
 };
+
+/** The automatic page title used when no custom SEO title is set. */
+export const defaultProcedureTitle = (name: string) => `${name} — Cost, Recovery & Results`;
 
 export const categories: { name: Category; id: string; intro: string }[] = [
   { name: "Face", id: "face", intro: "Subtle refinements that keep your features unmistakably yours." },
