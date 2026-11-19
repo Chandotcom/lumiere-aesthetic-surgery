@@ -11,13 +11,15 @@ import {
   type FieldArray,
   type FieldValues,
   type Path,
+  type PathValue,
 } from "react-hook-form";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ALLOWED_IMAGE_PREFIX } from "@/lib/cms/schemas";
+import { MediaPicker } from "@/components/admin/media/media-picker";
+import { isAllowedImageUrl } from "@/lib/cms/schemas";
 import { cn } from "@/lib/utils";
 
 /** Read a nested error message ("faqs.2.answer") from react-hook-form's errors object. */
@@ -135,9 +137,11 @@ export function NumberField<T extends FieldValues>({
 
 /** Image URL + alt text, with a live thumbnail when the URL is from an allowed host. */
 export function ImageField<T extends FieldValues>({ name, label }: { name: Path<T>; label: string }) {
-  const { control } = useFormContext<T>();
-  const src = useWatch({ control, name: `${name}.src` as Path<T> }) as string | undefined;
-  const valid = typeof src === "string" && src.startsWith(ALLOWED_IMAGE_PREFIX);
+  const { control, setValue, getValues } = useFormContext<T>();
+  const srcPath = `${name}.src` as Path<T>;
+  const altPath = `${name}.alt` as Path<T>;
+  const src = useWatch({ control, name: srcPath }) as string | undefined;
+  const valid = typeof src === "string" && isAllowedImageUrl(src);
   return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium">{label}</legend>
@@ -146,13 +150,21 @@ export function ImageField<T extends FieldValues>({ name, label }: { name: Path<
           {valid && <Image src={src} alt="" fill sizes="112px" className="object-cover" />}
         </div>
         <div className="space-y-3">
-          <TextField<T>
-            name={`${name}.src` as Path<T>}
-            label="Image URL"
-            hint={`Unsplash image URL (starts with ${ALLOWED_IMAGE_PREFIX}). Uploads come later.`}
+          <MediaPicker
+            onSelect={(item) => {
+              const opts = { shouldDirty: true, shouldValidate: true } as const;
+              setValue(srcPath, item.url as PathValue<T, Path<T>>, opts);
+              // Take the library's alt text, but don't wipe text the editor already wrote.
+              if (item.alt || !getValues(altPath)) setValue(altPath, item.alt as PathValue<T, Path<T>>, opts);
+            }}
           />
           <TextField<T>
-            name={`${name}.alt` as Path<T>}
+            name={srcPath}
+            label="Image URL"
+            hint="Filled in when you choose from the library. You can also paste an Unsplash image URL."
+          />
+          <TextField<T>
+            name={altPath}
             label="Alt text"
             hint="Describe the image for screen-reader users."
             maxLength={200}

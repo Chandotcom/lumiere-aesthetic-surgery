@@ -184,6 +184,26 @@ export const seoMeta = pgTable(
   (t) => [uniqueIndex("seo_meta_path_idx").on(t.path)],
 );
 
+// ── Media library ────────────────────────────────────────────────────────
+// Site imagery uploaded by staff (public Vercel Blob store). Never patient photos: those
+// belong to the consent-gated gallery, which uses a private store.
+export const media = pgTable(
+  "media",
+  {
+    id: serial("id").primaryKey(),
+    url: text("url").notNull().unique(),
+    pathname: text("pathname").notNull(),
+    alt: text("alt").notNull().default(""),
+    contentType: text("content_type").notNull(),
+    size: integer("size").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    uploadedBy: text("uploaded_by"), // Clerk user id
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("media_created_idx").on(t.createdAt)],
+);
+
 // ── Editable site content (CMS) ──────────────────────────────────────────
 // One row per editable document, e.g. kind "procedure" + key "rhinoplasty", or "home" + "main".
 // The public site reads `published`. `draft` holds unpublished edits (previewed with Draft Mode).

@@ -8,14 +8,28 @@ const text = (max: number, label = "This field") =>
   z.string().trim().min(1, `${label} is required.`).max(max, `${label} is limited to ${max} characters.`);
 
 /** Images must come from a host next/image allows (see images.remotePatterns in next.config.ts). */
-export const ALLOWED_IMAGE_PREFIX = "https://images.unsplash.com/";
+/**
+ * Image hosts next/image may load (keep in sync with images.remotePatterns in next.config.ts):
+ * Unsplash demo photography and our public Vercel Blob media store.
+ */
+export function isAllowedImageUrl(url: string) {
+  try {
+    const u = new URL(url);
+    return (
+      u.protocol === "https:" &&
+      (u.hostname === "images.unsplash.com" || u.hostname.endsWith(".public.blob.vercel-storage.com"))
+    );
+  } catch {
+    return false;
+  }
+}
 
 export const imageSchema = z.object({
   src: z
     .string()
     .trim()
-    .startsWith(ALLOWED_IMAGE_PREFIX, `Use an image URL starting with ${ALLOWED_IMAGE_PREFIX}`)
-    .max(500),
+    .max(500)
+    .refine(isAllowedImageUrl, "Choose an image from the media library, or paste an Unsplash image URL."),
   alt: text(200, "Alt text"),
 });
 

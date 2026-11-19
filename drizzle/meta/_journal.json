@@ -15,6 +15,13 @@
       "when": 1795060234200,
       "tag": "0001_natural_the_hand",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795063713902,
+      "tag": "0002_modern_reavers",
+      "breakpoints": true
     }
   ]
 }
