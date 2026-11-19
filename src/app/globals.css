@@ -1,0 +1,415 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* ==========================================================================
+   Lumière design system
+   Principles (luxury-clinic reference, our own brand):
+   - Light, oversized geometric-sans display type (Jost) + quiet sans body (Inter) with airy leading
+   - Warm neutrals + ONE bronze accent (links, buttons, focus)
+   - Hairline (1px) borders, near-square corners, no heavy shadows
+   - Generous fluid section spacing; layouts switch at 840px (md)
+   Contrast rule: bronze passes 4.5:1 on ivory/cream; never put white text on sand.
+   ========================================================================== */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* Brand palette */
+  --color-ink: #1d1b18;
+  --color-stone: #4a453e;
+  --color-ivory: #fbf9f6;
+  --color-cream: #f3ede4;
+  --color-sand: #d8c3a5; /* decorative only */
+  --color-bronze: #82633f; /* accent: links, buttons, focus */
+  --color-bronze-deep: #634b30; /* hover / pressed */
+  --color-line: #e2dbd0; /* hairlines */
+
+  /* Breakpoints (mirror the reference's 480 / 840 / 1024 / 1280 rhythm) */
+  --breakpoint-sm: 30rem;
+  --breakpoint-md: 52.5rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 100rem;
+
+  /* Fluid type scale (min @ 375px → max @ ~1440px) */
+  /* Sans display: slightly smaller max than a serif, a bit more leading, tighter tracking. */
+  --text-display: clamp(2.75rem, 1.4rem + 4vw, 5.25rem);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
+  --text-h1: clamp(2.25rem, 1.6rem + 2.9vw, 4.25rem);
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.025em;
+  --text-h2: clamp(1.875rem, 1.45rem + 1.8vw, 3rem);
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h3: clamp(1.375rem, 1.2rem + 0.8vw, 1.875rem);
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h4: clamp(1.125rem, 1.05rem + 0.3vw, 1.3125rem);
+  --text-h4--line-height: 1.3;
+  --text-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  --text-lead--line-height: 1.7;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.4;
+
+  --tracking-label: 0.18em;
+  --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-display);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* shadcn semantic tokens → brand palette (light theme only) */
+:root {
+  --background: #fbf9f6; /* ivory */
+  --foreground: #1d1b18; /* ink */
+  --card: #ffffff;
+  --card-foreground: #1d1b18;
+  --popover: #ffffff;
+  --popover-foreground: #1d1b18;
+  --primary: #82633f; /* bronze */
+  --primary-foreground: #ffffff;
+  --secondary: #f3ede4; /* cream */
+  --secondary-foreground: #1d1b18;
+  --muted: #f3ede4;
+  --muted-foreground: #4a453e; /* stone */
+  --accent: #f3ede4;
+  --accent-foreground: #1d1b18;
+  --destructive: #b42318;
+  --border: #e2dbd0; /* line */
+  --input: #d6cdbf;
+  --ring: #82633f;
+  --chart-1: #82633f;
+  --chart-2: #d8c3a5;
+  --chart-3: #4a453e;
+  --chart-4: #a98c68;
+  --chart-5: #1d1b18;
+  --radius: 0.125rem; /* near-square corners */
+  --sidebar: #f3ede4;
+  --sidebar-foreground: #1d1b18;
+  --sidebar-primary: #82633f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e9e1d5;
+  --sidebar-accent-foreground: #1d1b18;
+  --sidebar-border: #e2dbd0;
+  --sidebar-ring: #82633f;
+
+  /* Layout tokens */
+  --gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+  --section-y: clamp(4.5rem, 3rem + 4vw, 7rem); /* 72px phone → 112px desktop */
+  --section-intro: clamp(3rem, 2.25rem + 2vw, 4.5rem); /* section intro → its content */
+  --gap: 1.75rem;
+  --header-h: 5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+    scroll-padding-top: var(--header-h);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    text-wrap: balance;
+  }
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+    letter-spacing: var(--text-h1--letter-spacing);
+    font-weight: 300;
+  }
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+    letter-spacing: var(--text-h2--letter-spacing);
+    font-weight: 300;
+  }
+  h3 {
+    font-size: var(--text-h3);
+    line-height: var(--text-h3--line-height);
+    letter-spacing: var(--text-h3--letter-spacing);
+  }
+  h4 {
+    font-size: var(--text-h4);
+    line-height: var(--text-h4--line-height);
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: var(--color-sand);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-bronze);
+    outline-offset: 3px;
+  }
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ── Layout primitives ───────────────────────────────────────────────── */
+@utility container-site {
+  width: 100%;
+  max-width: calc(75rem + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+@utility container-wide {
+  width: 100%;
+  max-width: calc(100rem + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+@utility container-prose {
+  width: 100%;
+  max-width: calc(42rem + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+@utility section-y {
+  padding-block: var(--section-y);
+}
+/* Space between a section's intro (eyebrow + heading + blurb) and its main content */
+@utility section-intro {
+  margin-bottom: var(--section-intro);
+}
+@utility stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+/* Text + portrait image side by side (md+). The pair is centred with a fixed gap, so a
+   viewport-height-capped image never leaves a big empty hole between text and image.
+   Use with md:gap-x-16 lg:gap-x-20 on the same element, and media-pair-img on the image. */
+@utility media-pair {
+  @media (width >= 52.5rem) {
+    grid-template-columns: minmax(0, 38rem) auto;
+    justify-content: center;
+  }
+}
+@utility media-pair-img {
+  @media (width >= 52.5rem) {
+    width: min(34rem, 40vw, calc((100svh - var(--header-h) - 8rem) * 0.8));
+  }
+}
+@utility grid-auto {
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+@utility hairline {
+  border: 1px solid var(--color-line);
+}
+
+/* ── Typography primitives ───────────────────────────────────────────── */
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-bronze);
+}
+@utility lead {
+  font-size: var(--text-lead);
+  line-height: var(--text-lead--line-height);
+  color: var(--color-stone);
+}
+
+/* Accent link with a 1px underline that grows from the left on hover/focus. */
+@utility link-underline {
+  color: var(--color-bronze);
+  text-decoration: none;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition:
+    background-size 0.4s var(--ease-luxe),
+    color 0.2s;
+  &:hover,
+  &:focus-visible {
+    background-size: 100% 1px;
+    color: var(--color-bronze-deep);
+  }
+}
+
+/* ── Motion: scroll reveals (see components/motion/reveal.tsx) ─────────── */
+/* Hidden state only applies when scripting is on, so crawlers/no-JS always see content. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(1.75rem);
+    transition:
+      opacity 1s var(--ease-luxe),
+      transform 1s var(--ease-luxe);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  [data-reveal="fade"] {
+    transform: none;
+  }
+  /* "content": the cell (and its background) stays put; only its children fade up.
+     Use inside hairline grids (gap-px + bg-line) so they never flash as a solid grey block. */
+  [data-reveal="content"] {
+    opacity: 1;
+    transform: none;
+  }
+  [data-reveal="content"] > * {
+    opacity: 0;
+    transform: translateY(1rem);
+    transition:
+      opacity 0.9s var(--ease-luxe),
+      transform 0.9s var(--ease-luxe);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  [data-reveal="content"][data-visible] > * {
+    opacity: 1;
+    transform: none;
+  }
+  [data-reveal][data-visible] {
+    opacity: 1;
+    transform: none;
+  }
+  /* Images wipe up from the bottom. The clip goes on the CHILD: a clipped target has zero
+     visible area, so IntersectionObserver would never report it as intersecting. */
+  [data-reveal="image"] {
+    opacity: 1;
+    transform: none;
+  }
+  [data-reveal="image"] > * {
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 1.4s var(--ease-luxe);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  [data-reveal="image"][data-visible] > * {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@utility animate-marquee {
+  animation: marquee 60s linear infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* Subtle film grain for dark sections — adds tactile, printed-matter depth. */
+@utility grain {
+  position: relative;
+  isolation: isolate;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* Accent word inside a heading: <Heading>Natural <em>results</em></Heading> */
+@layer base {
+  :where(h1, h2, h3) em {
+    font-style: normal;
+    font-weight: 200;
+    color: var(--color-bronze);
+  }
+  :where(.bg-ink) :where(h1, h2, h3) em {
+    color: var(--color-sand);
+  }
+}
+
+/* Vertical rhythm inside `stack`: an eyebrow belongs to the heading below it, so it sits
+   closer (14px) than the standard 28px gap. Button groups get a little extra air. */
+@layer base {
+  :where(.stack) > .eyebrow,
+  :where(.stack) > [data-reveal]:has(> .eyebrow:only-child) {
+    margin-bottom: calc(0.875rem - var(--gap));
+  }
+  :where(.stack) > [data-slot="actions"] {
+    margin-top: 0.5rem;
+  }
+}
+
+/* Index numerals (01, 02, …) */
+@utility numeral {
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}

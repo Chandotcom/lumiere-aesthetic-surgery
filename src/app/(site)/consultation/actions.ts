@@ -1,0 +1,85 @@
+"use server";
+
+import { z } from "zod";
+import { getDb, schema } from "@/db";
+import { serviceGroups } from "@/lib/content/home";
+import { consultationSchema } from "@/lib/validation/consultation";
+
+/** procedure name → its area (e.g. "Rhinoplasty" → "Face") */
+const procedureArea = new Map(
+  serviceGroups.flatMap((g) => g.procedures.map((p) => [p.name, g.category] as const)),
+);
+
+export type ConsultationResult =
+  | { ok: true; firstName: string; demo?: boolean }
+  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+/** Derive a simple channel label from first-touch attribution. */
+function sourceFrom(utmSource?: string, referrer?: string) {
+  const s = (utmSource || "").toLowerCase();
+  if (s) return s.slice(0, 40);
+  const r = (referrer || "").toLowerCase();
+  if (r.includes("google.")) return "google";
+  if (r.includes("instagram.")) return "instagram";
+  if (r.includes("facebook.") || r.includes("fb.")) return "facebook";
+  if (r.includes("tiktok.")) return "tiktok";
+  return r ? "referral" : "website";
+}
+
+export async function submitConsultation(input: unknown): Promise<ConsultationResult> {
+  const parsed = consultationSchema.safeParse(input);
+  if (!parsed.success) {
+    const fieldErrors = Object.fromEntries(
+      Object.entries(z.flattenError(parsed.error).fieldErrors).map(([k, v]) => [k, v?.[0] ?? "Invalid"]),
+    );
+    return { ok: false, error: "Please check the highlighted fields.", fieldErrors };
+  }
+
+  const d = parsed.data;
+
+  // Honeypot filled → silently pretend success so bots learn nothing.
+  if (d.company) return { ok: true, firstName: d.firstName };
+
+  // Demo mode: no database connected yet. Never log the submission itself (it may contain health info).
+  if (!process.env.DATABASE_URL) {
+    console.warn("[consultation] DATABASE_URL not set — submission accepted in demo mode and not stored.");
+    return { ok: true, firstName: d.firstName, demo: true };
+  }
+
+  try {
+    await getDb()
+      .insert(schema.leads)
+      .values({
+        name: `${d.firstName} ${d.lastName}`,
+        email: d.email,
+        phone: d.phone || null,
+        // e.g. "Face (Rhinoplasty, Facelift); Body" — areas, refined by any specific procedures
+        procedureInterest: d.areas
+          .map((area) => {
+            const specific = d.procedures.filter((p) => procedureArea.get(p) === area);
+            return specific.length ? `${area} (${specific.join(", ")})` : area;
+          })
+          .join("; "),
+        consultType: d.consultType,
+        timeframe: d.timeframe,
+        contactMethod: d.contactMethod,
+        message: d.message || null,
+        smsConsent: d.smsConsent,
+        marketingConsent: d.marketingConsent,
+        source: sourceFrom(d.utmSource, d.referrer),
+        utmSource: d.utmSource || null,
+        utmMedium: d.utmMedium || null,
+        utmCampaign: d.utmCampaign || null,
+        referrer: d.referrer || null,
+        landingPage: d.landingPage || null,
+      });
+  } catch (err) {
+    console.error("[consultation] failed to store lead:", err instanceof Error ? err.message : err);
+    return {
+      ok: false,
+      error: "We couldn’t send your request just now. Please try again or call us directly.",
+    };
+  }
+
+  return { ok: true, firstName: d.firstName };
+}
