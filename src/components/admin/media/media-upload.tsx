@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { upload } from "@vercel/blob/client";
+import { uploadPresigned } from "@vercel/blob/client";
 import { ImageUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { registerMedia } from "@/app/admin/media/actions";
@@ -41,7 +41,7 @@ export function useMediaUpload(onUploaded?: (url: string) => void) {
     setBusy((n) => n + 1);
     try {
       const { width, height } = await imageSize(file);
-      const blob = await upload(`${MEDIA_FOLDER}${safeFileName(file.name)}`, file, {
+      const blob = await uploadPresigned(`${MEDIA_FOLDER}${safeFileName(file.name)}`, file, {
         access: "public",
         handleUploadUrl: "/api/admin/media/upload",
         contentType: file.type,
