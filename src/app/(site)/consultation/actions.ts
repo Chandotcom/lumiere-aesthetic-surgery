@@ -1,7 +1,10 @@
 "use server";
 
 import { z } from "zod";
+import { after } from "next/server";
 import { getDb, schema } from "@/db";
+import { getSiteSettings } from "@/lib/cms/settings";
+import { notifyNewLead } from "@/lib/email/notify-lead";
 import { serviceGroups } from "@/lib/content/home";
 import { consultationSchema } from "@/lib/validation/consultation";
 
@@ -46,8 +49,9 @@ export async function submitConsultation(input: unknown): Promise<ConsultationRe
     return { ok: true, firstName: d.firstName, demo: true };
   }
 
+  let lead: { id: number; createdAt: Date; source: string };
   try {
-    await getDb()
+    [lead] = await getDb()
       .insert(schema.leads)
       .values({
         name: `${d.firstName} ${d.lastName}`,
@@ -72,7 +76,8 @@ export async function submitConsultation(input: unknown): Promise<ConsultationRe
         utmCampaign: d.utmCampaign || null,
         referrer: d.referrer || null,
         landingPage: d.landingPage || null,
-      });
+      })
+      .returning({ id: schema.leads.id, createdAt: schema.leads.createdAt, source: schema.leads.source });
   } catch (err) {
     console.error("[consultation] failed to store lead:", err instanceof Error ? err.message : err);
     return {
@@ -80,6 +85,18 @@ export async function submitConsultation(input: unknown): Promise<ConsultationRe
       error: "We couldn’t send your request just now. Please try again or call us directly.",
     };
   }
+
+  // Email alerts go out after the response, so they never slow the form down or block the lead.
+  const settings = await getSiteSettings();
+  after(() =>
+    notifyNewLead({
+      ...lead,
+      firstName: d.firstName,
+      lastName: d.lastName,
+      email: d.email,
+      settings: { phone: settings.phone, notificationEmail: settings.notificationEmail ?? "" },
+    }),
+  );
 
   return { ok: true, firstName: d.firstName };
 }

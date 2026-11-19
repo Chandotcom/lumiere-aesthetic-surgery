@@ -23,6 +23,7 @@ export function settingsDefaults(): SiteSettings {
       { days: "Saturday", time: "By appointment" },
       { days: "Sunday", time: "Closed" },
     ],
+    notificationEmail: "",
   };
 }
 

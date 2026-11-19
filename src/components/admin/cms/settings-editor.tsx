@@ -25,6 +25,18 @@ export function SettingsEditor({ initial, state }: { initial: SiteSettings; stat
           <TextField<F> name="email" label="Email" maxLength={120} />
         </div>
       </Section>
+      <Section
+        title="New enquiry alerts"
+        description="Every Admin and Front desk account gets an email for each new consultation request. Add a shared inbox here to alert it too."
+      >
+        <TextField<F>
+          name="notificationEmail"
+          label="Clinic inbox (optional)"
+          maxLength={120}
+          placeholder="enquiries@yourclinic.com"
+          hint="The email only says who it’s from and links to the lead. Patient details stay in the dashboard."
+        />
+      </Section>
       <Section title="Address">
         <TextField<F> name="address.street" label="Street" maxLength={120} />
         <div className="grid gap-4 sm:grid-cols-3">

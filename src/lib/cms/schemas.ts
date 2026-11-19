@@ -159,6 +159,9 @@ export const settingsSchema = z.object({
     postal: text(20, "Postal code"),
   }),
   hours: z.array(z.object({ days: text(40, "Days"), time: text(40, "Hours") })).min(1).max(7),
+  // Extra inbox for new-enquiry alerts (staff with lead access get them too). Optional, so settings
+  // published before this field existed still validate.
+  notificationEmail: z.union([z.email("Enter a valid email address.").max(120), z.literal("")]).optional(),
 });
 
 export type SiteSettings = z.infer<typeof settingsSchema>;
