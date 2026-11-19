@@ -117,20 +117,54 @@ export const appointments = pgTable("appointments", {
   ...timestamps,
 });
 
-export const galleryItems = pgTable("gallery_items", {
-  id: serial("id").primaryKey(),
-  procedureId: integer("procedure_id").references(() => procedures.id),
-  beforeUrl: text("before_url").notNull(),
-  afterUrl: text("after_url").notNull(),
-  altText: text("alt_text").notNull(),
-  caption: text("caption"),
-  // Must be true before status can become "approved".
-  consentSigned: boolean("consent_signed").default(false).notNull(),
-  consentScope: text("consent_scope").default("website").notNull(), // website | website_social
-  showFace: boolean("show_face").default(false).notNull(),
-  status: moderationStatus("status").default("pending").notNull(),
-  ...timestamps,
-});
+// ── Before/after gallery ─────────────────────────────────────────────────
+// One row per patient case. It shows on the public site only when status = "approved", and
+// approval requires consentSigned. Photos live in the PRIVATE gallery Blob store and are served
+// through /api/gallery-image/[id], which repeats those checks. Sample (demo) cases have no photos
+// and render placeholder art.
+export const galleryItems = pgTable(
+  "gallery_items",
+  {
+    id: serial("id").primaryKey(),
+    number: integer("number").notNull().unique(), // public case number, slug = <procedure>-<number>
+    procedureSlug: text("procedure_slug").notNull(),
+    ageRange: text("age_range").notNull(),
+    timeAfter: text("time_after").notNull(),
+    notes: text("notes").notNull().default(""),
+    views: text("views").array().notNull(), // photo angles, in display order: Front | Profile | Oblique
+    consentSigned: boolean("consent_signed").default(false).notNull(),
+    consentScope: text("consent_scope").default("website").notNull(), // website | website_social
+    consentRecordedAt: timestamp("consent_recorded_at", { withTimezone: true }),
+    consentRecordedBy: text("consent_recorded_by"), // Clerk user id
+    showFace: boolean("show_face").default(false).notNull(),
+    isSample: boolean("is_sample").default(false).notNull(), // demo case with placeholder art
+    status: moderationStatus("status").default("pending").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }), // first approval
+    createdBy: text("created_by"),
+    ...timestamps,
+  },
+  (t) => [index("gallery_items_status_idx").on(t.status, t.publishedAt)],
+);
+
+export const galleryPhotos = pgTable(
+  "gallery_photos",
+  {
+    id: serial("id").primaryKey(),
+    itemId: integer("item_id")
+      .references(() => galleryItems.id, { onDelete: "cascade" })
+      .notNull(),
+    view: text("view").notNull(),
+    side: text("side").notNull(), // before | after
+    pathname: text("pathname").notNull(), // in the private store; never a public URL
+    contentType: text("content_type").notNull(),
+    size: integer("size").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    uploadedBy: text("uploaded_by"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("gallery_photos_slot_idx").on(t.itemId, t.view, t.side)],
+);
 
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),

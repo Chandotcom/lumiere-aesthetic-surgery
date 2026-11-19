@@ -23,7 +23,14 @@ export type GalleryCase = {
   /** Mirrors gallery_items consent fields — only consented cases are ever listed */
   consentSigned: true;
   showFace: boolean;
+  /**
+   * Image URLs per angle, served through the consent-checking /api/gallery-image route.
+   * Missing (sample cases, or this placeholder file) → PlaceholderPhoto art.
+   */
+  photos?: Partial<Record<View, CasePhotoPair>>;
 };
+
+export type CasePhotoPair = { before: string; after: string };
 
 // Per-procedure case notes; one demo case is generated per note.
 const notes: Record<string, string[]> = {

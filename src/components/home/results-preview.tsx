@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { ArrowRight, EyeOff } from "lucide-react";
 import { CompareSlider } from "@/components/gallery/compare-slider";
-import { PlaceholderPhoto } from "@/components/gallery/placeholder-photo";
+import { CasePhoto } from "@/components/gallery/case-photo";
 import { useAgeConfirmed } from "@/components/gallery/age-gate";
+import type { CasePhotoPair } from "@/lib/content/gallery";
 import type { Category } from "@/lib/content/procedures";
 
 type Featured = {
@@ -15,6 +16,7 @@ type Featured = {
   notes: string;
   ageRange: string;
   timeAfter: string;
+  photo?: CasePhotoPair;
 };
 
 /**
@@ -31,8 +33,12 @@ export function ResultsPreview({ featured }: { featured: Featured }) {
         {confirmed ? (
           <CompareSlider
             label={`${featured.procedureName}, case ${featured.number}`}
-            before={<PlaceholderPhoto category={featured.category} variant="before" />}
-            after={<PlaceholderPhoto category={featured.category} variant="after" />}
+            before={
+              <CasePhoto src={featured.photo?.before} alt={`${featured.procedureName}, case ${featured.number}, before`} category={featured.category} variant="before" sizes="(min-width: 840px) 40vw, 100vw" />
+            }
+            after={
+              <CasePhoto src={featured.photo?.after} alt={`${featured.procedureName}, case ${featured.number}, after`} category={featured.category} variant="after" sizes="(min-width: 840px) 40vw, 100vw" />
+            }
           />
         ) : (
           <div className="relative aspect-[4/5] overflow-hidden">

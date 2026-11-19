@@ -1,17 +1,25 @@
+import type { CasePhotoPair } from "@/lib/content/gallery";
 import type { Category } from "@/lib/content/procedures";
-import { PlaceholderPhoto } from "./placeholder-photo";
+import { CasePhoto } from "./case-photo";
 
 /**
  * Static side-by-side before/after thumbnail for grids. No interactivity, so a grid of
  * hundreds of cases stays light; the interactive slider lives on the case page.
- * With real photos, use two next/image thumbnails here (lazy-loaded by default).
+ * Real photos are lazy-loaded; cases without photos show placeholder art.
  */
-export function ThumbPair({ category }: { category: Category }) {
+export function ThumbPair({ category, pair, label }: { category: Category; pair?: CasePhotoPair; label?: string }) {
   return (
     <div className="grid aspect-[8/5] grid-cols-2 gap-px overflow-hidden bg-line">
       {(["before", "after"] as const).map((v) => (
         <div key={v} className="relative">
-          <PlaceholderPhoto category={category} variant={v} className="[&>span]:hidden" />
+          <CasePhoto
+            src={pair?.[v]}
+            alt={label ? `${label}, ${v}` : ""}
+            category={category}
+            variant={v}
+            sizes="(min-width: 1280px) 16vw, (min-width: 480px) 25vw, 50vw"
+            className={pair ? undefined : "[&>span]:hidden"}
+          />
           <span
             className={
               v === "before"

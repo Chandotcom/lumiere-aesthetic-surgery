@@ -11,9 +11,9 @@ import { FinalCta } from "@/components/home/final-cta";
 import { Reveal } from "@/components/motion/reveal";
 import { ProcedureCard } from "@/components/procedures/procedure-card";
 import { JsonLd } from "@/components/seo/json-ld";
-import { galleryCases } from "@/lib/content/gallery";
 import { categories, defaultProcedureTitle, formatPrice, monthlyFrom, procedures } from "@/lib/content/procedures";
 import { getProcedureBySlug, getProcedures } from "@/lib/cms/procedures";
+import { getCasesForProcedure } from "@/lib/gallery/read";
 import { breadcrumbSchema, procedureSchema } from "@/lib/seo/schema";
 import { site } from "@/lib/site";
 
@@ -73,7 +73,7 @@ async function ProcedureContent({ params }: { params: PageProps<"/procedures/[sl
   const category = categories.find((c) => c.name === p.category)!;
   const related = (await getProcedures()).filter((x) => x.category === p.category && x.slug !== p.slug);
   const surgical = p.category !== "Non-surgical";
-  const caseCount = galleryCases.filter((c) => c.procedureSlug === p.slug).length;
+  const caseCount = (await getCasesForProcedure(p.slug)).length;
   const facts = [
     { label: "Procedure time", value: p.facts.duration },
     { label: "Anesthesia", value: p.facts.anesthesia },

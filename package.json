@@ -14,7 +14,9 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
     "db:seed:demo": "tsx src/db/seed-demo.ts",
-    "db:demo:clear": "tsx src/db/seed-demo.ts --clear"
+    "db:demo:clear": "tsx src/db/seed-demo.ts --clear",
+    "db:seed:gallery": "tsx src/db/seed-gallery.ts",
+    "db:gallery:clear": "tsx src/db/seed-gallery.ts --clear"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

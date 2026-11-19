@@ -7,6 +7,7 @@ import { Container, Eyebrow, Heading } from "@/components/ds";
 import { AgeGate } from "@/components/gallery/age-gate";
 import { GalleryBrowser, GalleryPreview } from "@/components/gallery/gallery-browser";
 import { JsonLd } from "@/components/seo/json-ld";
+import { getGalleryCases } from "@/lib/gallery/read";
 import { breadcrumbSchema } from "@/lib/seo/schema";
 
 export function generateMetadata(): Promise<Metadata> {
@@ -18,6 +19,11 @@ const promises = [
   { icon: FileSignature, title: "Shared with consent", text: "Each patient signs a written photo authorization, which they can withdraw." },
   { icon: BadgeCheck, title: "Our own patients", text: "Every case was performed by Dr. Marsh at our practice." },
 ];
+
+/** Cached published cases; the browser itself reads the URL filters, hence the Suspense. */
+async function PublishedGallery() {
+  return <GalleryBrowser cases={await getGalleryCases()} />;
+}
 
 export default function GalleryPage() {
   return (
@@ -68,7 +74,7 @@ export default function GalleryPage() {
           </p>
           <AgeGate preview={<GalleryPreview />}>
             <Suspense fallback={<GalleryPreview />}>
-              <GalleryBrowser />
+              <PublishedGallery />
             </Suspense>
           </AgeGate>
           <p className="mt-16 max-w-3xl text-xs text-stone">

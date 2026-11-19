@@ -22,6 +22,20 @@
       "when": 1795063713902,
       "tag": "0002_modern_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795072422620,
+      "tag": "0003_drop_old_gallery_items",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795072438778,
+      "tag": "0004_gallery_manager",
+      "breakpoints": true
     }
   ]
 }

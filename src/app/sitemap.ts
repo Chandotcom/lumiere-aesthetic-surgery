@@ -1,13 +1,13 @@
 import type { MetadataRoute } from "next";
-import { galleryCases } from "@/lib/content/gallery";
 import { getPosts } from "@/lib/cms/journal";
+import { getGalleryCases } from "@/lib/gallery/read";
 import { procedures } from "@/lib/content/procedures";
 import { site } from "@/lib/site";
 
 const staticPaths = ["/", "/about", "/procedures", "/consultation", "/gallery", "/blog", "/contact", "/privacy", "/terms", "/accessibility"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await getPosts();
+  const [posts, cases] = await Promise.all([getPosts(), getGalleryCases()]);
   return [
     ...staticPaths.map((path) => ({
       url: new URL(path, site.url).toString(),
@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly" as const,
       priority: 0.6,
     })),
-    ...galleryCases.map((c) => ({
+    ...cases.map((c) => ({
       url: new URL(`/gallery/${c.slug}`, site.url).toString(),
       lastModified: c.publishedAt,
       changeFrequency: "yearly" as const,

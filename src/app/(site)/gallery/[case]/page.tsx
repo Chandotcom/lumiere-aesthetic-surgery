@@ -9,17 +9,21 @@ import { AgeGate } from "@/components/gallery/age-gate";
 import { CaseViewer } from "@/components/gallery/case-viewer";
 import { ThumbPair } from "@/components/gallery/thumb-pair";
 import { JsonLd } from "@/components/seo/json-ld";
-import { caseTitle, casesFor, galleryCases, getCase } from "@/lib/content/gallery";
+import { caseTitle } from "@/lib/content/gallery";
+import { getCasesForProcedure, getGalleryCase, getGalleryCases } from "@/lib/gallery/read";
 import { categories, getProcedure } from "@/lib/content/procedures";
 import { breadcrumbSchema } from "@/lib/seo/schema";
 import { site } from "@/lib/site";
 
-export function generateStaticParams() {
-  return galleryCases.map((c) => ({ case: c.slug }));
+export async function generateStaticParams() {
+  // Cases published later render on first visit and are then cached (dynamicParams).
+  const slugs = (await getGalleryCases()).map((c) => ({ case: c.slug }));
+  // Cache Components needs at least one param to prerender; this placeholder just 404s.
+  return slugs.length ? slugs : [{ case: "none" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/gallery/[case]">): Promise<Metadata> {
-  const c = getCase((await params).case);
+  const c = await getGalleryCase((await params).case);
   const p = c && getProcedure(c.procedureSlug);
   if (!c || !p) return {};
   return {
@@ -63,12 +67,12 @@ function GatePreview() {
 }
 
 async function CaseContent({ params }: { params: PageProps<"/gallery/[case]">["params"] }) {
-  const c = getCase((await params).case);
+  const c = await getGalleryCase((await params).case);
   const p = c && getProcedure(c.procedureSlug);
   if (!c || !p) notFound();
 
   const category = categories.find((x) => x.name === c.category)!;
-  const siblings = casesFor(c.procedureSlug);
+  const siblings = await getCasesForProcedure(c.procedureSlug);
   const idx = siblings.findIndex((x) => x.slug === c.slug);
   const prev = siblings[(idx - 1 + siblings.length) % siblings.length];
   const next = siblings[(idx + 1) % siblings.length];
@@ -115,7 +119,7 @@ async function CaseContent({ params }: { params: PageProps<"/gallery/[case]">["p
             {/* Viewer column sizes to the viewer; details sit beside it; the pair is centred */}
             <div className="grid gap-12 md:grid-cols-[auto_minmax(0,26rem)] md:justify-center md:gap-14 lg:gap-24">
               <div>
-                <CaseViewer category={c.category} views={c.views} label={caseTitle(c)} />
+                <CaseViewer category={c.category} views={c.views} label={caseTitle(c)} photos={c.photos} />
               </div>
 
               <div className="stack md:sticky md:top-[calc(var(--header-h)+2rem)] md:self-start">
@@ -177,7 +181,7 @@ async function CaseContent({ params }: { params: PageProps<"/gallery/[case]">["p
                   {more.map((m) => (
                     <li key={m.slug}>
                       <Link href={`/gallery/${m.slug}`} prefetch className="group block">
-                        <ThumbPair category={m.category} />
+                        <ThumbPair category={m.category} pair={m.photos?.[m.views[0]]} label={caseTitle(m)} />
                         <p className="mt-4 flex justify-between gap-4 text-sm">
                           <span className="text-ink transition-colors group-hover:text-bronze">{m.notes}</span>
                           <span className="numeral shrink-0 text-xs text-stone">#{m.number}</span>

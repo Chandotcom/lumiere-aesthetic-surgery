@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, FilePenLine, Images, Inbox, LayoutDashboard, Newspaper } from "lucide-react";
+import { CalendarDays, FilePenLine, GalleryHorizontalEnd, Images, Inbox, LayoutDashboard, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Add sections here as they're built (gallery, reviews, settings).
+// Add sections here as they're built (reviews, users).
 const items = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/leads", label: "Leads", icon: Inbox },
@@ -13,6 +13,7 @@ const items = [
   { href: "/admin/content", label: "Pages", icon: FilePenLine },
   { href: "/admin/content/journal", label: "Journal", icon: Newspaper },
   { href: "/admin/media", label: "Media", icon: Images },
+  { href: "/admin/gallery", label: "Gallery", icon: GalleryHorizontalEnd },
 ] as const;
 
 /** The item whose href is the longest prefix of the current path (so Journal wins over Pages). */

@@ -1,16 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import type { View } from "@/lib/content/gallery";
+import type { GalleryCase, View } from "@/lib/content/gallery";
 import type { Category } from "@/lib/content/procedures";
 import { cn } from "@/lib/utils";
 import { CompareSlider } from "./compare-slider";
-import { PlaceholderPhoto } from "./placeholder-photo";
+import { CasePhoto } from "./case-photo";
 
 /** Large comparison slider with a switcher for each photo angle (Front / Profile / Oblique). */
-export function CaseViewer({ category, views, label }: { category: Category; views: View[]; label: string }) {
+export function CaseViewer({
+  category,
+  views,
+  label,
+  photos,
+}: {
+  category: Category;
+  views: View[];
+  label: string;
+  photos?: GalleryCase["photos"];
+}) {
   const [active, setActive] = useState(0);
   const view = views[active];
+  const pair = photos?.[view];
+  const sizes = "(min-width: 840px) 42rem, 100vw";
 
   return (
     // Width capped from viewport height so the whole 4:5 comparison is visible without scrolling
@@ -19,8 +31,8 @@ export function CaseViewer({ category, views, label }: { category: Category; vie
       <CompareSlider
         key={view}
         label={`${label}, ${view.toLowerCase()} view`}
-        before={<PlaceholderPhoto category={category} variant="before" />}
-        after={<PlaceholderPhoto category={category} variant="after" />}
+        before={<CasePhoto src={pair?.before} alt={`${label}, ${view.toLowerCase()} view, before`} category={category} variant="before" sizes={sizes} />}
+        after={<CasePhoto src={pair?.after} alt={`${label}, ${view.toLowerCase()} view, after`} category={category} variant="after" sizes={sizes} />}
       />
 
       {views.length > 1 && (

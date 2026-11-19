@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container, Eyebrow, Heading } from "@/components/ds";
 import { Reveal } from "@/components/motion/reveal";
-import { galleryCases } from "@/lib/content/gallery";
+import { getGalleryCases } from "@/lib/gallery/read";
 import { getProcedure } from "@/lib/content/procedures";
 import { ResultsPreview } from "./results-preview";
 
@@ -10,9 +10,11 @@ import { ResultsPreview } from "./results-preview";
  * Homepage before/after teaser. The preview stays locked until the visitor confirms 18+
  * (shared with the gallery), then shows one featured case with the comparison slider.
  */
-export function ResultsTeaser() {
+export async function ResultsTeaser() {
   // Featured: newest face case (faces carry no nudity risk in the preview).
-  const c = galleryCases.find((x) => x.category === "Face") ?? galleryCases[0];
+  const cases = await getGalleryCases();
+  const c = cases.find((x) => x.category === "Face") ?? cases[0];
+  if (!c) return null;
   const featured = {
     slug: c.slug,
     number: c.number,
@@ -21,6 +23,7 @@ export function ResultsTeaser() {
     notes: c.notes,
     ageRange: c.ageRange,
     timeAfter: c.timeAfter,
+    photo: c.photos?.[c.views[0]],
   };
 
   return (

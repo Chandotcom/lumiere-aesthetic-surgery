@@ -5,16 +5,17 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { galleryCases, PAGE_SIZE } from "@/lib/content/gallery";
+import { PAGE_SIZE, type GalleryCase } from "@/lib/content/gallery";
 import { categories, getProcedure, type Category } from "@/lib/content/procedures";
 import { cn } from "@/lib/utils";
 import { ThumbPair } from "./thumb-pair";
 
 /**
  * Filters + "Load more" live in the URL (?category=face&procedure=rhinoplasty&page=2), so views
- * are shareable and Back returns to the same spot. Later this queries the DB 12 rows at a time.
+ * are shareable and Back returns to the same spot. `cases` are the published cases (cached on
+ * the server), newest first.
  */
-export function GalleryBrowser() {
+export function GalleryBrowser({ cases }: { cases: GalleryCase[] }) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -35,7 +36,7 @@ export function GalleryBrowser() {
   };
   const categoryIdOf = (cat: Category | "All") => categories.find((c) => c.name === cat)?.id;
 
-  const inCategory = category === "All" ? galleryCases : galleryCases.filter((c) => c.category === category);
+  const inCategory = category === "All" ? cases : cases.filter((c) => c.category === category);
   const matching = procedureSlug ? inCategory.filter((c) => c.procedureSlug === procedureSlug) : inCategory;
   const visible = matching.slice(0, page * PAGE_SIZE);
   const remaining = matching.length - visible.length;
@@ -46,7 +47,7 @@ export function GalleryBrowser() {
     count: inCategory.filter((c) => c.procedureSlug === s).length,
   }));
   const count = (cat: Category | "All") =>
-    cat === "All" ? galleryCases.length : galleryCases.filter((c) => c.category === cat).length;
+    cat === "All" ? cases.length : cases.filter((c) => c.category === cat).length;
 
   // After "Load more", move focus to the first newly revealed case (keyboard/screen readers).
   const firstNewRef = useRef<HTMLAnchorElement>(null);
@@ -122,7 +123,7 @@ export function GalleryBrowser() {
                     prefetch
                     className="group block"
                   >
-                    <ThumbPair category={c.category} />
+                    <ThumbPair category={c.category} pair={c.photos?.[c.views[0]]} label={`${p.name}, case ${c.number}`} />
                     <div className="mt-5 flex items-start justify-between gap-4">
                       <div>
                         <h3 className="font-heading text-h4 text-ink transition-colors group-hover:text-bronze">
