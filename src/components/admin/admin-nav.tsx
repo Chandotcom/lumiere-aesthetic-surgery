@@ -2,20 +2,33 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, FilePenLine, GalleryHorizontalEnd, Images, Inbox, LayoutDashboard, MessageSquareQuote, Newspaper } from "lucide-react";
+import {
+  CalendarDays,
+  FilePenLine,
+  GalleryHorizontalEnd,
+  History,
+  Images,
+  Inbox,
+  LayoutDashboard,
+  MessageSquareQuote,
+  Newspaper,
+  UsersRound,
+} from "lucide-react";
+import { can, type Permission, type StaffRole } from "@/lib/admin/roles";
 import { cn } from "@/lib/utils";
 
-// Add sections here as they're built (users, activity).
-const items = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/leads", label: "Leads", icon: Inbox },
-  { href: "/admin/appointments", label: "Appointments", icon: CalendarDays },
-  { href: "/admin/content", label: "Pages", icon: FilePenLine },
-  { href: "/admin/content/journal", label: "Journal", icon: Newspaper },
-  { href: "/admin/media", label: "Media", icon: Images },
-  { href: "/admin/gallery", label: "Gallery", icon: GalleryHorizontalEnd },
-  { href: "/admin/reviews", label: "Reviews", icon: MessageSquareQuote },
-] as const;
+const items: { href: string; label: string; icon: typeof Inbox; permission: Permission }[] = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" },
+  { href: "/admin/leads", label: "Leads", icon: Inbox, permission: "leads" },
+  { href: "/admin/appointments", label: "Appointments", icon: CalendarDays, permission: "appointments" },
+  { href: "/admin/content", label: "Pages", icon: FilePenLine, permission: "content" },
+  { href: "/admin/content/journal", label: "Journal", icon: Newspaper, permission: "content" },
+  { href: "/admin/media", label: "Media", icon: Images, permission: "media" },
+  { href: "/admin/gallery", label: "Gallery", icon: GalleryHorizontalEnd, permission: "gallery" },
+  { href: "/admin/reviews", label: "Reviews", icon: MessageSquareQuote, permission: "reviews" },
+  { href: "/admin/users", label: "Staff", icon: UsersRound, permission: "users" },
+  { href: "/admin/activity", label: "Activity", icon: History, permission: "activity" },
+];
 
 /** The item whose href is the longest prefix of the current path (so Journal wins over Pages). */
 function activeHref(pathname: string) {
@@ -25,30 +38,33 @@ function activeHref(pathname: string) {
     .sort((a, b) => b.length - a.length)[0];
 }
 
-export function AdminNav() {
+/** Sidebar, showing only the sections the signed-in role can open (the server enforces it too). */
+export function AdminNav({ role }: { role: StaffRole }) {
   const pathname = usePathname();
   const current = activeHref(pathname);
   return (
     <nav aria-label="Admin">
       <ul className="flex flex-wrap gap-1 md:flex-col">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = href === current;
-          return (
-            <li key={href}>
-              <Link
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-sm px-3 py-2 text-sm text-stone transition-colors hover:bg-cream hover:text-ink",
-                  active && "bg-cream font-medium text-ink",
-                )}
-              >
-                <Icon className="size-4" aria-hidden />
-                {label}
-              </Link>
-            </li>
-          );
-        })}
+        {items
+          .filter((i) => can(role, i.permission))
+          .map(({ href, label, icon: Icon }) => {
+            const active = href === current;
+            return (
+              <li key={href}>
+                <Link
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-sm px-3 py-2 text-sm text-stone transition-colors hover:bg-cream hover:text-ink",
+                    active && "bg-cream font-medium text-ink",
+                  )}
+                >
+                  <Icon className="size-4" aria-hidden />
+                  {label}
+                </Link>
+              </li>
+            );
+          })}
       </ul>
     </nav>
   );

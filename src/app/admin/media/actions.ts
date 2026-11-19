@@ -86,6 +86,6 @@ export async function deleteMedia(id: number, force = false): Promise<ActionResu
 
 /** Library contents for the image picker in the content editors. */
 export async function listMediaForPicker(): Promise<MediaItem[]> {
-  await requireStaff();
+  await requireStaff("media");
   return listMedia();
 }

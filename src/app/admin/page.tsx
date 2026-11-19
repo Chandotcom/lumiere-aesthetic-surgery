@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { DbNotice, hasDatabase } from "@/components/admin/db-notice";
@@ -8,6 +9,8 @@ import { SourceChart, WeeklyLeadsChart } from "@/components/admin/kpi-charts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { capitalize, formatDuration, formatPercent, formatWeek } from "@/lib/admin/format";
 import { getKpis, type Kpis } from "@/lib/admin/kpis";
+import { can, homeFor } from "@/lib/admin/roles";
+import { getStaff } from "@/lib/admin/session";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -32,6 +35,9 @@ async function loadKpis() {
 }
 
 async function Dashboard() {
+  // Enquiry KPIs are front-desk data; other roles start in their own section.
+  const staff = await getStaff();
+  if (staff && !can(staff.role, "dashboard")) redirect(homeFor(staff.role));
   if (!hasDatabase()) return <DbNotice />;
   const kpis = await loadKpis();
 
