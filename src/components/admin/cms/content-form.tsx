@@ -32,6 +32,7 @@ export function ContentForm<T extends FieldValues>({
   state,
   children,
   revertLabel = "Revert live page to default",
+  unpublishedText = "Live page shows the default content",
   extraActions,
 }: {
   form: UseFormReturn<T>;
@@ -41,6 +42,8 @@ export function ContentForm<T extends FieldValues>({
   children: React.ReactNode;
   /** Label for removing the live version (e.g. "Unpublish" for posts with no built-in default). */
   revertLabel?: string;
+  /** Status when nothing is published yet (pages without code defaults say "Not published yet"). */
+  unpublishedText?: string;
   /** Extra buttons for the bottom action row (e.g. Delete post). */
   extraActions?: React.ReactNode;
 }) {
@@ -81,7 +84,7 @@ export function ContentForm<T extends FieldValues>({
     <FormProvider {...form}>
       <form onSubmit={saveDraft} noValidate className="space-y-8">
         <div className="sticky top-0 z-10 -mx-6 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-ivory/95 px-6 py-3 backdrop-blur">
-          <StatusLine state={state} dirty={isDirty} />
+          <StatusLine state={state} dirty={isDirty} unpublishedText={unpublishedText} />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" variant="outline" disabled={pending}>
               Save draft
@@ -137,11 +140,11 @@ export function ContentForm<T extends FieldValues>({
   );
 }
 
-function StatusLine({ state, dirty }: { state: ContentState; dirty: boolean }) {
+function StatusLine({ state, dirty, unpublishedText }: { state: ContentState; dirty: boolean; unpublishedText: string }) {
   const parts: string[] = [];
   if (dirty) parts.push("Unsaved changes");
   else if (state.hasDraft) parts.push(`Draft saved ${state.draftUpdatedAt ?? ""}`.trim());
-  parts.push(state.hasPublished ? `Live version published ${state.publishedAt ?? ""}`.trim() : "Live page shows the default content");
+  parts.push(state.hasPublished ? `Live version published ${state.publishedAt ?? ""}`.trim() : unpublishedText);
   return (
     <p className="text-sm text-stone" aria-live="polite">
       {parts.join(" · ")}

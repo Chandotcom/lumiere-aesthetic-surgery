@@ -41,6 +41,7 @@ export function PostEditor({
       contentKey={slug}
       state={state}
       revertLabel={builtIn ? "Revert live article to the original" : "Unpublish"}
+      unpublishedText={builtIn ? undefined : "Not published yet"}
       extraActions={builtIn ? null : <DeletePostButton slug={slug} />}
     >
       <Section title="Basics">

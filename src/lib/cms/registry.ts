@@ -5,6 +5,7 @@ import { getProcedure, procedures } from "@/lib/content/procedures";
 import { homeDefaults } from "./home";
 import { procedureToFields } from "./procedures";
 import { isBuiltInPost, postToFields } from "./journal";
+import { pageSchema, pageSlugSchema } from "./page-schema";
 import { homeSchema, postSchema, postSlugSchema, procedureFieldsSchema, seoSchema, settingsSchema } from "./schemas";
 import { seoDefaults, settingsDefaults } from "./settings";
 
@@ -61,6 +62,14 @@ export const contentKinds = {
       return builtIn ? postToFields(builtIn) : null;
     },
     previewPath: (key) => `/blog/${key}`,
+  },
+  page: {
+    label: "Page",
+    schema: pageSchema,
+    // Pages exist only once created in the admin; they have no code defaults.
+    isKey: (key) => pageSlugSchema.safeParse(key).success,
+    defaults: () => null,
+    previewPath: (key) => `/${key}`,
   },
 } satisfies Record<string, ContentKind>;
 

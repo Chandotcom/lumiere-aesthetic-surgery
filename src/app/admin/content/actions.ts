@@ -6,6 +6,7 @@ import { ActionError, runStaffAction, type ActionResult } from "@/lib/admin/acti
 import { logAudit } from "@/lib/admin/audit";
 import { clinicDayKey } from "@/lib/admin/time";
 import { isBuiltInPost, newPostFields } from "@/lib/cms/journal";
+import { newPageFields, pageSlugSchema } from "@/lib/cms/page-schema";
 import { cmsTag } from "@/lib/cms/read";
 import { resolveKind } from "@/lib/cms/registry";
 import { postSlugSchema } from "@/lib/cms/schemas";
@@ -97,6 +98,30 @@ export async function deletePost(slug: string): Promise<ActionResult> {
     await deleteDocument("post", slug);
     updateTag(cmsTag("post"));
     await logAudit(staffId, "content.post_deleted", "post", slug);
+  });
+}
+
+/** Start a new section-built page as a draft. The address (slug) can't change afterwards. */
+export async function createPage(slug: string, title: string): Promise<ActionResult> {
+  const s = pageSlugSchema.safeParse(slug);
+  if (!s.success) return { ok: false, error: s.error.issues[0]?.message ?? "Invalid address." };
+  const t = z.string().trim().min(1, "Enter a title.").max(120).safeParse(title);
+  if (!t.success) return { ok: false, error: t.error.issues[0]?.message ?? "Invalid title." };
+  return run(async (staffId) => {
+    if (await getDocument("page", s.data)) throw new ActionError("A page with this address already exists. Choose another.");
+    await saveDraft("page", s.data, newPageFields(t.data), staffId);
+    await logAudit(staffId, "content.page_created", "page", s.data);
+  });
+}
+
+/** Permanently delete a page and its versions. */
+export async function deletePage(slug: string): Promise<ActionResult> {
+  return run(async (staffId) => {
+    kindOrThrow("page", slug);
+    if (!(await getDocument("page", slug))) throw new ActionError("This page no longer exists.");
+    await deleteDocument("page", slug);
+    updateTag(cmsTag("page"));
+    await logAudit(staffId, "content.page_deleted", "page", slug);
   });
 }
 
