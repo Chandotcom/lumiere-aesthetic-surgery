@@ -171,7 +171,7 @@ The demo is aimed at a **generic/international** market. Show privacy best pract
 
 - Every page carries a permanent "DEMO — fictional practice, not medical advice" banner and `noindex` robots meta.
 - Never use real patient photos, a real clinic's branding, or real credentials. Use stock or AI images, and label seeded reviews "Sample review".
-- No third-party tracking pixels on forms or admin pages. Load non-essential scripts only after cookie consent.
+- No third-party tracking pixels on forms or admin pages. Load non-essential scripts only after cookie consent. Consent lives in `src/lib/consent.ts` (`useConsent()`, `readConsent()`, localStorage, 12 months, `CONSENT_VERSION`; GPC forces marketing off). `CookieConsent` (banner + preferences dialog, equal-weight Accept/Reject) sits in the site layout and on `not-found`, and the footer has "Cookie settings". **Analytics** (`ConsentedAnalytics`, Vercel Web Analytics, site layout only, so never on admin) and **marketing attribution** (`AttributionCapture`: first touch kept in memory until consent, then stored; withdrawing deletes it; `readAttribution()` returns {} without consent) wait for consent. Gate any new optional script the same way, and update the privacy page’s cookie section.
 - SMS and marketing consent are separate, unchecked checkboxes. The contact form tells users not to include medical details.
 - Gallery and testimonials show a "results vary" disclaimer. Never add AI "preview your results" face simulators.
 - Accessibility target is WCAG AA: labels, contrast, keyboard navigation, alt text, reduced motion.

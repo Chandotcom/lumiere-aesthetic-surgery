@@ -22,7 +22,7 @@ const buildSections = (c: SiteSettings): LegalSection[] => [
     title: "Information we collect",
     body: `**Information you give us** — when you request a consultation or contact us, we collect your name, email, phone number, the areas or procedures you’re interested in, your preferred contact method and any message you choose to send. Please don’t include detailed medical history in website forms; we discuss that privately at your consultation.
 
-**Information collected automatically** — we use privacy-friendly analytics that do **not** use cookies or track you across other websites. They record anonymous, aggregated information such as pages viewed, approximate country and device type.
+**Information collected automatically** — if you allow it, we use privacy-friendly analytics that do **not** use cookies or track you across other websites. They record anonymous, aggregated information such as pages viewed, approximate country and device type.
 
 **How you found us** — if you arrive from an ad or a link containing campaign tags, we note the campaign name and referring website with your consultation request. This helps us understand which channels are useful. It is stored only in your browser session until you submit a form.`,
   },
@@ -52,7 +52,13 @@ We never sell your personal information, and we don’t use advertising pixels o
   {
     id: "cookies",
     title: "Cookies & tracking",
-    body: `This website does not use advertising or cross-site tracking cookies. Our analytics are cookieless. We use your browser’s temporary session storage for two conveniences: remembering that you confirmed you are 18+ to view the gallery, and remembering how you arrived at the site for your consultation request. Both are cleared when you close the tab.`,
+    body: `This website does not use advertising or cross-site tracking cookies, and nothing optional runs until you choose. You can change your choice at any time with **Cookie settings** at the bottom of every page.
+
+- **Strictly necessary (always on):** your cookie choice (kept in your browser for up to 12 months), your 18+ confirmation for the gallery (cleared when you close the tab), and secure sign-in cookies on staff pages only.
+- **Analytics (optional):** privacy-friendly, cookieless analytics that count page views, approximate country and device type in aggregate. They don’t follow you to other websites.
+- **Marketing attribution (optional):** for your current visit only, which campaign or website brought you here, sent with your consultation request so we know which channels work. Turning it off deletes it.
+
+If your browser sends a Global Privacy Control signal, we treat it as a refusal of marketing attribution.`,
   },
   {
     id: "security-retention",

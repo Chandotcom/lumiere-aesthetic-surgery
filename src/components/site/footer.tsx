@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookieSettingsButton } from "@/components/site/cookie-consent";
 import { serviceGroups } from "@/lib/content/home";
 import { getSiteSettings } from "@/lib/cms/settings";
 import { site } from "@/lib/site";
@@ -58,6 +59,9 @@ export async function SiteFooter() {
               {l.label}
             </FooterLink>
           ))}
+          <li>
+            <CookieSettingsButton className="text-left text-ivory/80 transition-colors hover:text-sand" />
+          </li>
         </FooterCol>
       </div>
 

@@ -1,6 +1,8 @@
 import { SiteFooter } from "@/components/site/footer";
 import { SiteHeader } from "@/components/site/header";
 import { AttributionCapture } from "@/components/site/attribution";
+import { ConsentedAnalytics } from "@/components/site/consented-analytics";
+import { CookieConsent } from "@/components/site/cookie-consent";
 import { MobileCta } from "@/components/site/mobile-cta";
 import { PreviewBanner } from "@/components/site/preview-banner";
 import { getSiteSettings } from "@/lib/cms/settings";
@@ -23,6 +25,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       </main>
       <SiteFooter />
       <MobileCta phone={phone} />
+      {/* Optional tools wait for consent. Never add ad pixels without gating them the same way. */}
+      <CookieConsent />
+      <ConsentedAnalytics />
       <AttributionCapture />
     </>
   );

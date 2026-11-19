@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter, Jost } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { DemoBanner } from "@/components/site/demo-banner";
 import { allowIndexing, site } from "@/lib/site";
@@ -30,8 +29,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <DemoBanner />
         {children}
         <Toaster />
-        {/* Cookieless, first-party analytics. Never add Meta/Google ad pixels here. */}
-        <Analytics />
       </body>
     </html>
   );

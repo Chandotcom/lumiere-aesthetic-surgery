@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container, Eyebrow, Heading } from "@/components/ds";
+import { CookieConsent } from "@/components/site/cookie-consent";
 import { SiteFooter } from "@/components/site/footer";
 import { SiteHeader } from "@/components/site/header";
 import { MobileCta } from "@/components/site/mobile-cta";
@@ -63,6 +64,7 @@ export default async function NotFound() {
         </Container>
       </main>
       <SiteFooter />
+      <CookieConsent />
       <MobileCta phone={phone} />
     </>
   );

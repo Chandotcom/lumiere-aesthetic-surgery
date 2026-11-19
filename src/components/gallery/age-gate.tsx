@@ -56,7 +56,7 @@ export function AgeGate({ children, preview }: { children: React.ReactNode; prev
         aria-labelledby="age-gate-title"
         className="absolute inset-x-0 top-0 flex justify-center px-4 pt-10 md:pt-16"
       >
-        <div className="stack max-w-lg items-center border border-line bg-ivory p-8 text-center shadow-[0_30px_60px_-30px_rgb(29_27_24/0.35)] md:p-12">
+        <div className="stack w-full min-w-0 max-w-lg items-center border border-line bg-ivory p-6 text-center sm:p-8 shadow-[0_30px_60px_-30px_rgb(29_27_24/0.35)] md:p-12">
           <span className="grid size-14 place-items-center rounded-full bg-cream text-bronze">
             <EyeOff className="size-6" aria-hidden />
           </span>
@@ -69,10 +69,10 @@ export function AgeGate({ children, preview }: { children: React.ReactNode; prev
           </p>
           {/* Stacked full-width: two long labels side by side would overflow the panel */}
           <div data-slot="actions" className="flex w-full flex-col gap-3">
-            <Button size="cta-lg" className="w-full" onClick={confirm}>
+            <Button size="cta-lg" className="h-auto min-h-12 w-full whitespace-normal py-3" onClick={confirm}>
               I am 18+ — view gallery
             </Button>
-            <ButtonLink size="cta-lg" variant="outline" className="w-full" href="/procedures">
+            <ButtonLink size="cta-lg" variant="outline" className="h-auto min-h-12 w-full whitespace-normal py-3" href="/procedures">
               Browse procedures instead
             </ButtonLink>
           </div>
