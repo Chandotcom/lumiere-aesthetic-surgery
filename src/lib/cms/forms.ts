@@ -1,6 +1,6 @@
 import "server-only";
 import { formSchema, type FormFields } from "./form-schema";
-import { readContent } from "./read";
+import { readContent, readDocument } from "./read";
 import { getDocument, listDocuments } from "./store";
 
 /**
@@ -18,8 +18,9 @@ export async function getForms(): Promise<Map<string, FormFields>> {
   return out;
 }
 
-export async function getForm(slug: string) {
-  return (await getForms()).get(slug);
+export async function getForm(slug: string): Promise<FormFields | undefined> {
+  const parsed = formSchema.safeParse(await readDocument("form", slug));
+  return parsed.success ? parsed.data : undefined;
 }
 
 /** The live definition, uncached and never a draft. Submissions are validated against this. */

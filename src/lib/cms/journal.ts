@@ -1,7 +1,7 @@
 import "server-only";
 import { posts as builtInPosts, type Post } from "@/lib/content/journal";
 import { procedures } from "@/lib/content/procedures";
-import { readContent } from "./read";
+import { readContent, readDocument } from "./read";
 import { postSchema, type PostFields } from "./schemas";
 
 const procedureSlugs = new Set(procedures.map((p) => p.slug));
@@ -76,6 +76,11 @@ export async function getPosts(): Promise<Post[]> {
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.slug.localeCompare(b.slug));
 }
 
-export async function getPostBySlug(slug: string) {
-  return (await getPosts()).find((p) => p.slug === slug);
+/** One post by its own cache entry (see readDocument), so a just-published post is never a 404. */
+export async function getPostBySlug(slug: string): Promise<Post | undefined> {
+  const raw = await readDocument("post", slug);
+  if (raw === undefined) return builtInPosts.find((p) => p.slug === slug);
+  const parsed = postSchema.safeParse(raw);
+  if (!parsed.success) return builtInPosts.find((p) => p.slug === slug);
+  return parsed.data.visible ? fieldsToPost(slug, parsed.data) : undefined;
 }

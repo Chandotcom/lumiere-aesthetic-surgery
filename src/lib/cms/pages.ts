@@ -1,6 +1,6 @@
 import "server-only";
 import { pageSchema, type PageFields } from "./page-schema";
-import { readContent } from "./read";
+import { readContent, readDocument } from "./read";
 
 /**
  * Section-built pages, keyed by slug: published versions for visitors, drafts in staff preview.
@@ -17,6 +17,7 @@ export async function getPages(): Promise<Map<string, PageFields>> {
   return out;
 }
 
-export async function getPage(slug: string) {
-  return (await getPages()).get(slug);
+export async function getPage(slug: string): Promise<PageFields | undefined> {
+  const parsed = pageSchema.safeParse(await readDocument("page", slug));
+  return parsed.success ? parsed.data : undefined;
 }

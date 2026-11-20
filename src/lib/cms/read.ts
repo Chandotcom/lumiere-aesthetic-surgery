@@ -1,5 +1,5 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import { draftMode } from "next/headers";
 import { getDb, schema } from "@/db";
@@ -45,6 +45,35 @@ export async function readContent(kind: string): Promise<Record<string, unknown>
     const reason = cause ?? (err instanceof Error ? err.message : String(err));
     console.warn(`[cms] Couldn't read "${kind}" content, showing the built-in version instead. Reason: ${reason}`);
     return {};
+  }
+}
+
+/**
+ * One document (published, or the draft in preview), or undefined. Use this to decide whether a
+ * page EXISTS: because the slug is part of the cache key, a new page can't be answered by an older
+ * cached copy of the whole list. That list is captured in the shared shell of dynamic routes,
+ * which made brand-new pages show "Page not found" for a moment after publishing.
+ */
+export async function readDocument(kind: string, key: string): Promise<unknown> {
+  "use cache";
+  cacheTag(cmsTag(kind));
+  cacheLife("max");
+
+  const { isEnabled: preview } = await draftMode();
+  if (!process.env.DATABASE_URL) return undefined;
+
+  try {
+    const [row] = await getDb()
+      .select({ draft: schema.contentDocuments.draft, published: schema.contentDocuments.published })
+      .from(schema.contentDocuments)
+      .where(and(eq(schema.contentDocuments.kind, kind), eq(schema.contentDocuments.key, key)))
+      .limit(1);
+    if (!row) return undefined;
+    return (preview ? (row.draft ?? row.published) : row.published) ?? undefined;
+  } catch (err) {
+    cacheLife("minutes");
+    console.warn(`[cms] Couldn't read "${kind}" content, showing the built-in version instead. Reason: ${err instanceof Error ? err.message : String(err)}`);
+    return undefined;
   }
 }
 
