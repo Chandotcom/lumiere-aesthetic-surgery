@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { notFoundMetadata } from "@/lib/seo/not-found";
 import { ArrowLeft, ArrowRight, BadgeCheck, ChevronRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container, Eyebrow, Heading, TextLink } from "@/components/ds";
@@ -25,7 +26,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/gallery/[case]">): Promise<Metadata> {
   const c = await getGalleryCase((await params).case);
   const p = c && getProcedure(c.procedureSlug);
-  if (!c || !p) return {};
+  if (!c || !p) return notFoundMetadata;
   return {
     title: `${p.name} Before & After — Case ${c.number}`,
     description: `${p.name} results for a patient aged ${c.ageRange}, photographed ${c.timeAfter} after treatment. ${c.notes}`,

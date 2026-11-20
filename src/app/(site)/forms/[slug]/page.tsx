@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { notFoundMetadata } from "@/lib/seo/not-found";
 import { notFound } from "next/navigation";
 import { Container, Eyebrow, Heading } from "@/components/ds";
 import { FormRenderer } from "@/components/forms/form-renderer";
@@ -18,7 +19,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/forms/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const form = await getForm(slug);
-  if (!form) return {};
+  if (!form) return notFoundMetadata;
   return {
     title: form.title,
     description: form.intro || undefined,

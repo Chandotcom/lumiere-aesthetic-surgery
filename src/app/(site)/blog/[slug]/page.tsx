@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { notFoundMetadata } from "@/lib/seo/not-found";
 import { ArrowRight, ChevronRight, ShieldCheck } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container, Eyebrow, Heading, TextLink } from "@/components/ds";
@@ -23,7 +24,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): Promise<Metadata> {
   const post = await getPostBySlug((await params).slug);
-  if (!post) return {};
+  if (!post) return notFoundMetadata;
   return {
     title: post.title,
     description: post.excerpt,

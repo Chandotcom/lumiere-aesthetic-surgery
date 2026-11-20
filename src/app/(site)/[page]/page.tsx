@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { notFoundMetadata } from "@/lib/seo/not-found";
 import { notFound } from "next/navigation";
 import { PageBlocks } from "@/components/blocks/page-blocks";
 import { Container } from "@/components/ds";
@@ -19,7 +20,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/[page]">): Promise<Metadata> {
   const slug = (await params).page;
   const p = await getPage(slug);
-  if (!p) return {};
+  if (!p) return notFoundMetadata;
   return {
     title: p.seo.title || p.title,
     description: p.seo.description || undefined,
