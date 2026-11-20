@@ -24,7 +24,8 @@ export function newLeadAlert(p: { displayName: string; receivedAt: string; sourc
   const what = p.formTitle ? `New enquiry (${p.formTitle})` : "New consultation request";
   const subject = `${what}: ${p.displayName}`;
   const text = [
-    `${what} from ${p.displayName}.`,
+    // displayName usually ends with an initial ("Maria L."), so don't add a second full stop.
+    `${what} from ${p.displayName}${p.displayName.endsWith(".") ? "" : "."}`,
     `Received: ${p.receivedAt}`,
     `Came from: ${p.source}`,
     "",
