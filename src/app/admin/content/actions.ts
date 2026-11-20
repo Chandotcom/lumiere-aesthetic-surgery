@@ -10,6 +10,7 @@ import { formSlugSchema, newFormFields } from "@/lib/cms/form-schema";
 import { newPageFields, pageSchema, pageSlugSchema } from "@/lib/cms/page-schema";
 import { cmsTag } from "@/lib/cms/read";
 import { resolveKind } from "@/lib/cms/registry";
+import { warmAfterChange } from "@/lib/cms/warm";
 import { postSlugSchema } from "@/lib/cms/schemas";
 import {
   deleteDocument,
@@ -54,6 +55,7 @@ export async function publishContent(kind: string, key: string, data?: unknown):
     else kindOrThrow(kind, key);
     if (!(await publishDraft(kind, key, staffId))) throw new ActionError("There are no changes to publish.");
     updateTag(cmsTag(kind));
+    await warmAfterChange(kind, key);
     await logAudit(staffId, "content.published", kind, key);
   });
 }
@@ -72,6 +74,7 @@ export async function revertToDefault(kind: string, key: string): Promise<Action
     kindOrThrow(kind, key);
     if (!(await unpublish(kind, key))) throw new ActionError("This page already shows the default content.");
     updateTag(cmsTag(kind));
+    await warmAfterChange(kind, key);
     await logAudit(staffId, "content.reverted_to_default", kind, key);
   });
 }
@@ -99,6 +102,7 @@ export async function deletePost(slug: string): Promise<ActionResult> {
     if (isBuiltInPost(slug)) throw new ActionError("Built-in articles can't be deleted. Hide them instead.");
     await deleteDocument("post", slug);
     updateTag(cmsTag("post"));
+    await warmAfterChange("post", slug);
     await logAudit(staffId, "content.post_deleted", "post", slug);
   });
 }
@@ -123,6 +127,7 @@ export async function deletePage(slug: string): Promise<ActionResult> {
     if (!(await getDocument("page", slug))) throw new ActionError("This page no longer exists.");
     await deleteDocument("page", slug);
     updateTag(cmsTag("page"));
+    await warmAfterChange("page", slug);
     await logAudit(staffId, "content.page_deleted", "page", slug);
   });
 }
@@ -158,6 +163,7 @@ export async function deleteForm(slug: string): Promise<ActionResult> {
     }
     await deleteDocument("form", slug);
     updateTag(cmsTag("form"));
+    await warmAfterChange("form", slug);
     await logAudit(staffId, "content.form_deleted", "form", slug);
   });
 }

@@ -1,11 +1,25 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Phone } from "lucide-react";
 
-/** Fixed bottom action bar on phones (hidden from 840px up, and on the consultation page itself). */
+/**
+ * Fixed bottom action bar on phones (hidden from 840px up, and on the consultation page itself).
+ * usePathname() must sit inside <Suspense>: when Next rebuilds the shared shell of a dynamic route
+ * (e.g. /procedures/[slug] after Contact details are published) the path isn't known yet, and
+ * without a boundary that rebuild fails and every page of the route returns 500.
+ */
 export function MobileCta({ phone }: { phone: string }) {
+  return (
+    <Suspense fallback={null}>
+      <MobileCtaBar phone={phone} />
+    </Suspense>
+  );
+}
+
+function MobileCtaBar({ phone }: { phone: string }) {
   const pathname = usePathname();
   if (pathname === "/consultation") return null;
   const tel = `tel:${phone.replace(/[^+\d]/g, "")}`;
