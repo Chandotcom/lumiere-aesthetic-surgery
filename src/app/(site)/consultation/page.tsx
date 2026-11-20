@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getConsultationTexts } from "@/lib/cms/consultation";
 import { getSiteSettings, seoMetadata, telHref } from "@/lib/cms/settings";
 import { CalendarCheck, Clock, MapPin, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 import { ConsultationForm } from "@/components/consultation/consultation-form";
@@ -19,7 +20,7 @@ const expectations = [
 ];
 
 export default async function ConsultationPage() {
-  const { phone } = await getSiteSettings();
+  const [{ phone }, texts] = await Promise.all([getSiteSettings(), getConsultationTexts()]);
   const tel = telHref(phone);
   return (
     <>
@@ -87,7 +88,7 @@ export default async function ConsultationPage() {
           <div className="lg:col-span-7">
             <div className="border border-line bg-white p-6 shadow-[0_30px_60px_-40px_rgb(29_27_24/0.3)] sm:p-10 lg:p-12">
               <Suspense fallback={<div className="h-[36rem]" aria-hidden />}>
-                <ConsultationForm phone={phone} />
+                <ConsultationForm phone={phone} texts={texts} />
               </Suspense>
             </div>
             <p className="mt-4 text-xs text-stone">

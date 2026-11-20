@@ -6,6 +6,7 @@ const singletons: Record<string, { label: string; href: string }> = {
   home: { label: "Homepage", href: "/admin/content/home" },
   settings: { label: "Contact details", href: "/admin/content/settings" },
   seo: { label: "SEO", href: "/admin/content/seo" },
+  consultation: { label: "Consultation form", href: "/admin/forms/consultation" },
 };
 
 /** Admin editor URL for a content document (kind + key). */

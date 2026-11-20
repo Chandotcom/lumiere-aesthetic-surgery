@@ -5,6 +5,7 @@ import { getProcedure, procedures } from "@/lib/content/procedures";
 import { homeDefaults } from "./home";
 import { procedureToFields } from "./procedures";
 import { isBuiltInPost, postToFields } from "./journal";
+import { consultationDefaults, consultationTextsSchema } from "./consultation-schema";
 import { formSchema, formSlugSchema } from "./form-schema";
 import { pageSchema, pageSlugSchema } from "./page-schema";
 import { homeSchema, postSchema, postSlugSchema, procedureFieldsSchema, seoSchema, settingsSchema } from "./schemas";
@@ -79,6 +80,13 @@ export const contentKinds = {
     isKey: (key) => formSlugSchema.safeParse(key).success,
     defaults: () => null,
     previewPath: (key) => `/forms/${key}`,
+  },
+  consultation: {
+    label: "Consultation form",
+    schema: consultationTextsSchema,
+    isKey: (key) => key === "main",
+    defaults: () => consultationDefaults(),
+    previewPath: () => "/consultation",
   },
 } satisfies Record<string, ContentKind>;
 

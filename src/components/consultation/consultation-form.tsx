@@ -11,6 +11,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { TextLink } from "@/components/ds";
 import { readAttribution } from "@/components/site/attribution";
 import { submitConsultation, type ConsultationResult } from "@/app/(site)/consultation/actions";
+import { NAME_TOKEN, splitLink, type ConsultationTexts } from "@/lib/cms/consultation-schema";
 import { serviceGroups } from "@/lib/content/home";
 import {
   consultationSchema,
@@ -24,12 +25,13 @@ import { cn } from "@/lib/utils";
 type FormIn = z.input<typeof consultationSchema>;
 type FormOut = z.output<typeof consultationSchema>;
 
-const steps = ["Your interests", "Your details", "Confirm"] as const;
 
 const inputClass =
   "h-12 w-full rounded-sm border border-input bg-white px-4 text-base text-ink transition-colors placeholder:text-stone/60 hover:border-stone/50 focus-visible:border-bronze aria-invalid:border-destructive";
 
-export function ConsultationForm({ phone }: { phone: string }) {
+/** `texts` comes from admin → Forms → Consultation form; the questions and stored values stay in code. */
+export function ConsultationForm({ phone, texts: t }: { phone: string; texts: ConsultationTexts }) {
+  const steps = [t.steps.interests, t.steps.details, t.steps.confirm];
   const searchParams = useSearchParams();
   // ?procedure=rhinoplasty → pre-select its area (Face) and the procedure itself
   const slug = searchParams.get("procedure");
@@ -69,6 +71,7 @@ export function ConsultationForm({ phone }: { phone: string }) {
   });
   const chosenGroups = serviceGroups.filter((g) => areas?.includes(g.category));
   const phoneRequired = contactMethod !== "email" || !!smsConsent;
+  const [privacyBefore, privacyLink, privacyAfter] = splitLink(t.confirm.privacyConsent);
 
   // Move focus to the step heading on step change (keyboard + screen-reader users).
   useEffect(() => {
@@ -103,14 +106,14 @@ export function ConsultationForm({ phone }: { phone: string }) {
     });
   });
 
-  if (result) return <Success ref={headingRef} firstName={result.firstName} demo={result.demo} phone={phone} />;
+  if (result) return <Success ref={headingRef} firstName={result.firstName} demo={result.demo} phone={phone} texts={t.success} />;
 
   return (
     <form onSubmit={onSubmit} noValidate aria-describedby={serverError ? "form-error" : undefined}>
       {/* Progress */}
       <ol className="mb-10 grid grid-cols-3 gap-3" aria-label="Form progress">
         {steps.map((label, i) => (
-          <li key={label} className="flex flex-col gap-2" aria-current={i === step ? "step" : undefined}>
+          <li key={i} className="flex flex-col gap-2" aria-current={i === step ? "step" : undefined}>
             <span className={cn("h-0.5 w-full transition-colors duration-500", i <= step ? "bg-bronze" : "bg-line")} />
             <span className={cn("text-xs tracking-wide uppercase", i === step ? "text-ink" : "text-stone/70")}>
               <span className="numeral mr-1.5">0{i + 1}</span>
@@ -145,11 +148,13 @@ export function ConsultationForm({ phone }: { phone: string }) {
       {/* STEP 1 */}
       <div hidden={step !== 0} className="mt-8 stack">
         {/* Broad areas first — specifics are revealed only for the areas chosen */}
-        <fieldset aria-describedby={errors.areas ? "areas-error" : "areas-hint"}>
-          <legend className="mb-1 font-medium text-ink">Which area are you interested in?</legend>
-          <p id="areas-hint" className="mb-5 text-sm text-stone">
-            Choose one or more. Your surgeon will help with the details.
-          </p>
+        <fieldset aria-describedby={errors.areas ? "areas-error" : t.interests.areasHint ? "areas-hint" : undefined}>
+          <legend className="mb-1 font-medium text-ink">{t.interests.areasQuestion}</legend>
+          {t.interests.areasHint && (
+            <p id="areas-hint" className="mb-5 text-sm text-stone">
+              {t.interests.areasHint}
+            </p>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             {serviceGroups.map((g) => (
               <AreaCard
@@ -168,7 +173,7 @@ export function ConsultationForm({ phone }: { phone: string }) {
               className="size-4.5 cursor-pointer accent-bronze"
               {...register("areas", { onChange: () => form.clearErrors("areas") })}
             />
-            I’m not sure yet — I’d like advice
+            {t.interests.notSureLabel}
           </label>
           <FieldError id="areas-error" message={errors.areas?.message} />
         </fieldset>
@@ -176,7 +181,7 @@ export function ConsultationForm({ phone }: { phone: string }) {
         {chosenGroups.length > 0 && (
           <fieldset className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-500 border-l-2 border-line pl-5">
             <legend className="mb-1 font-medium text-ink">
-              Anything specific in mind? <span className="text-sm font-normal text-stone">Optional</span>
+              {t.interests.specificQuestion} <span className="text-sm font-normal text-stone">Optional</span>
             </legend>
             <div className="mt-4 stack gap-5!">
               {chosenGroups.map((g) => (
@@ -194,20 +199,20 @@ export function ConsultationForm({ phone }: { phone: string }) {
         )}
 
         <fieldset aria-describedby={errors.consultType ? "consultType-error" : undefined}>
-          <legend className="mb-4 font-medium text-ink">How would you like to meet?</legend>
+          <legend className="mb-4 font-medium text-ink">{t.interests.consultTypeQuestion}</legend>
           <div className="grid gap-3 sm:grid-cols-2">
             {consultTypes.map((o) => (
-              <OptionCard key={o.value} type="radio" value={o.value} label={o.label} hint={o.hint} {...register("consultType", { onChange: () => form.clearErrors("consultType") })} />
+              <OptionCard key={o.value} type="radio" value={o.value} label={t.consultTypes[o.value].label} hint={t.consultTypes[o.value].hint} {...register("consultType", { onChange: () => form.clearErrors("consultType") })} />
             ))}
           </div>
           <FieldError id="consultType-error" message={errors.consultType?.message} />
         </fieldset>
 
         <fieldset aria-describedby={errors.timeframe ? "timeframe-error" : undefined}>
-          <legend className="mb-4 font-medium text-ink">When are you hoping to have treatment?</legend>
+          <legend className="mb-4 font-medium text-ink">{t.interests.timeframeQuestion}</legend>
           <div className="grid gap-3 sm:grid-cols-2">
             {timeframes.map((o) => (
-              <OptionCard key={o.value} type="radio" value={o.value} label={o.label} {...register("timeframe", { onChange: () => form.clearErrors("timeframe") })} />
+              <OptionCard key={o.value} type="radio" value={o.value} label={t.timeframes[o.value].label} {...register("timeframe", { onChange: () => form.clearErrors("timeframe") })} />
             ))}
           </div>
           <FieldError id="timeframe-error" message={errors.timeframe?.message} />
@@ -217,12 +222,12 @@ export function ConsultationForm({ phone }: { phone: string }) {
       {/* STEP 2 */}
       <div hidden={step !== 1} className="mt-8 stack">
         <div className="grid gap-6 sm:grid-cols-2">
-          <TextField label="First name" autoComplete="given-name" error={errors.firstName?.message} {...register("firstName")} />
-          <TextField label="Last name" autoComplete="family-name" error={errors.lastName?.message} {...register("lastName")} />
+          <TextField label={t.details.firstName} autoComplete="given-name" error={errors.firstName?.message} {...register("firstName")} />
+          <TextField label={t.details.lastName} autoComplete="family-name" error={errors.lastName?.message} {...register("lastName")} />
         </div>
-        <TextField label="Email" type="email" autoComplete="email" inputMode="email" error={errors.email?.message} {...register("email")} />
+        <TextField label={t.details.email} type="email" autoComplete="email" inputMode="email" error={errors.email?.message} {...register("email")} />
         <TextField
-          label="Phone"
+          label={t.details.phone}
           optional={!phoneRequired}
           type="tel"
           autoComplete="tel"
@@ -231,10 +236,10 @@ export function ConsultationForm({ phone }: { phone: string }) {
           {...register("phone")}
         />
         <fieldset>
-          <legend className="mb-4 font-medium text-ink">Preferred way to reach you</legend>
+          <legend className="mb-4 font-medium text-ink">{t.details.contactMethodQuestion}</legend>
           <div className="grid gap-3 sm:grid-cols-3">
             {contactMethods.map((o) => (
-              <OptionCard key={o.value} type="radio" value={o.value} label={o.label} {...register("contactMethod", { onChange: () => form.clearErrors("phone") })} />
+              <OptionCard key={o.value} type="radio" value={o.value} label={t.contactMethods[o.value].label} {...register("contactMethod", { onChange: () => form.clearErrors("phone") })} />
             ))}
           </div>
         </fieldset>
@@ -244,15 +249,17 @@ export function ConsultationForm({ phone }: { phone: string }) {
       <div hidden={step !== 2} className="mt-8 stack">
         <div>
           <label htmlFor="message" className="mb-2 flex justify-between font-medium text-ink">
-            Anything you’d like us to know? <span className="text-sm font-normal text-stone">Optional</span>
+            {t.confirm.messageLabel} <span className="text-sm font-normal text-stone">Optional</span>
           </label>
-          <p id="message-hint" className="mb-3 text-sm text-stone">
-            Please don’t include medical history here — we’ll discuss it privately at your consultation.
-          </p>
+          {t.confirm.messageHint && (
+            <p id="message-hint" className="mb-3 text-sm text-stone">
+              {t.confirm.messageHint}
+            </p>
+          )}
           <textarea
             id="message"
             rows={4}
-            aria-describedby={cn("message-hint", errors.message && "message-error")}
+            aria-describedby={cn(t.confirm.messageHint && "message-hint", errors.message && "message-error") || undefined}
             aria-invalid={!!errors.message}
             className={cn(inputClass, "h-auto py-3")}
             {...register("message")}
@@ -261,28 +268,25 @@ export function ConsultationForm({ phone }: { phone: string }) {
         </div>
 
         <div className="stack gap-4! border-t border-line pt-6">
-          <ConsentBox {...register("smsConsent")}>
-            Text me appointment reminders and updates. Message &amp; data rates may apply. Reply STOP
-            to opt out at any time.
-          </ConsentBox>
-          <ConsentBox {...register("marketingConsent")}>
-            Send me occasional news and offers by email. Unsubscribe at any time.
-          </ConsentBox>
+          <ConsentBox {...register("smsConsent")}>{t.confirm.smsConsent}</ConsentBox>
+          <ConsentBox {...register("marketingConsent")}>{t.confirm.marketingConsent}</ConsentBox>
           <ConsentBox
             required
             error={errors.privacyAccepted?.message}
             {...register("privacyAccepted")}
           >
-            I have read the <TextLink href="/privacy">privacy policy</TextLink> and agree to be
-            contacted about my consultation request.
+            {privacyBefore}
+            <TextLink href="/privacy">{privacyLink}</TextLink>
+            {privacyAfter}
           </ConsentBox>
         </div>
 
-        <p className="flex items-start gap-2 text-xs text-stone">
-          <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          Your information is sent securely and used only to arrange your consultation. Consenting
-          to texts or marketing is never required.
-        </p>
+        {t.confirm.securityNote && (
+          <p className="flex items-start gap-2 text-xs text-stone">
+            <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            {t.confirm.securityNote}
+          </p>
+        )}
       </div>
 
       {/* Navigation */}
@@ -306,7 +310,7 @@ export function ConsultationForm({ phone }: { phone: string }) {
               </>
             ) : (
               <>
-                Request a consultation <ArrowRight />
+                {t.confirm.submitLabel} <ArrowRight />
               </>
             )}
           </Button>
@@ -441,11 +445,13 @@ function Success({
   firstName,
   demo,
   phone,
+  texts,
 }: {
   ref: React.Ref<HTMLHeadingElement>;
   firstName: string;
   demo?: boolean;
   phone: string;
+  texts: ConsultationTexts["success"];
 }) {
   return (
     <div className="stack" role="status">
@@ -453,12 +459,9 @@ function Success({
         <Check className="size-6" aria-hidden />
       </span>
       <h2 ref={ref} tabIndex={-1} className="font-heading text-h2 font-light outline-none">
-        Thank you, {firstName}.
+        {texts.heading.split(NAME_TOKEN).join(firstName)}
       </h2>
-      <p className="lead">
-        Your consultation request has been received. A patient coordinator will contact you within
-        one business day to find a time that suits you.
-      </p>
+      <p className="lead">{texts.text}</p>
       {demo && (
         <p className="border-l-2 border-bronze bg-cream px-4 py-3 text-sm text-stone">
           <strong className="font-medium text-ink">Demo mode:</strong> no database is connected, so

@@ -9,7 +9,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { countLeadsByForm } from "@/lib/admin/leads";
 import { formSchema } from "@/lib/cms/form-schema";
-import { listDocuments } from "@/lib/cms/store";
+import { listDocuments, listDocumentStates } from "@/lib/cms/store";
 
 export const metadata: Metadata = { title: "Forms" };
 
@@ -37,8 +37,12 @@ export default function FormsPage() {
 
 async function loadForms() {
   await connection();
-  const [docs, counts] = await Promise.all([listDocuments("form"), countLeadsByForm()]);
-  return docs
+  const [docs, counts, consultation] = await Promise.all([
+    listDocuments("form"),
+    countLeadsByForm(),
+    listDocumentStates("consultation"),
+  ]);
+  const forms = docs
     .map((d) => {
       const data = formSchema.safeParse(d.draft ?? d.published);
       return {
@@ -51,13 +55,39 @@ async function loadForms() {
       };
     })
     .sort((a, b) => a.title.localeCompare(b.title));
+  return { forms, consultation: consultation.get("main") };
 }
 
 async function FormList() {
   if (!hasDatabase()) return <DbNotice />;
-  const forms = await loadForms();
+  const { forms, consultation } = await loadForms();
 
   return (
+    <div className="space-y-10">
+    <section aria-labelledby="built-in-forms" className="space-y-4">
+      <h2 id="built-in-forms" className="font-heading text-xl">
+        Built-in form
+      </h2>
+      <ul className="divide-y divide-line rounded-sm border border-line">
+        <li>
+          <Link href="/admin/forms/consultation" className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-cream/50">
+            <span className="min-w-0">
+              <span className="block font-medium">Consultation form</span>
+              <span className="text-xs text-stone">/consultation · Edit its wording: questions, options, consent texts and the thank-you message</span>
+            </span>
+            <span className="flex shrink-0 items-center gap-2">
+              {consultation?.hasDraft && <Badge className="bg-sand/40 text-ink">Draft</Badge>}
+              {consultation?.hasPublished ? (
+                <Badge className="bg-emerald-100 text-emerald-900">Edited</Badge>
+              ) : (
+                <span className="text-xs text-stone">Default</span>
+              )}
+              <ChevronRight className="size-4 text-stone" aria-hidden />
+            </span>
+          </Link>
+        </li>
+      </ul>
+    </section>
     <section aria-labelledby="custom-forms" className="space-y-4">
       <h2 id="custom-forms" className="font-heading text-xl">
         Your forms
@@ -92,5 +122,6 @@ async function FormList() {
         </ul>
       )}
     </section>
+    </div>
   );
 }
