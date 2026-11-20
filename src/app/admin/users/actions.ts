@@ -7,6 +7,7 @@ import { logAudit } from "@/lib/admin/audit";
 import { STAFF_ROLES } from "@/lib/admin/roles";
 import { getStaff } from "@/lib/admin/session";
 import { listStaff } from "@/lib/admin/staff";
+import { trustedRequestOrigin } from "@/lib/request-origin";
 
 const run = (fn: (staffId: string) => Promise<void>) => runStaffAction("users", fn);
 const roleSchema = z.enum(STAFF_ROLES);
@@ -23,6 +24,7 @@ export async function inviteStaff(input: { email: string; role: string }): Promi
     .object({ email: z.email("Enter a valid email address.").trim().toLowerCase(), role: roleSchema })
     .safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Check the form." };
+  const origin = await trustedRequestOrigin();
   return run(async (staffId) => {
     let id: string;
     try {
@@ -31,6 +33,8 @@ export async function inviteStaff(input: { email: string; role: string }): Promi
         publicMetadata: { role: parsed.data.role },
         notify: true,
         expiresInDays: 7,
+        // Our own sign-up page, so the invitee lands back on this site and then in the admin.
+        ...(origin ? { redirectUrl: `${origin}/sign-up` } : {}),
       });
       id = invitation.id;
     } catch (err) {

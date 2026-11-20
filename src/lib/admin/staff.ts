@@ -65,3 +65,27 @@ export async function staffNames(userIds: string[]): Promise<Map<string, string>
   for (const id of ids) if (!out.has(id)) out.set(id, "Former staff member");
   return out;
 }
+
+/**
+ * Give a new account the role it was invited with, even if the person signed up directly instead
+ * of through the invitation link (Clerk only applies an invitation's metadata via the link).
+ * Only VERIFIED email addresses count, so nobody can claim an invite for an address they don't own.
+ * The invitation is then revoked so it can't be used twice. Returns the role, or null.
+ */
+export async function claimPendingInvitation(user: User): Promise<StaffRole | null> {
+  const verified = user.emailAddresses
+    .filter((e) => e.verification?.status === "verified")
+    .map((e) => e.emailAddress.toLowerCase());
+  if (verified.length === 0) return null;
+  const clerk = await clerkClient();
+  for (const email of verified) {
+    const { data } = await clerk.invitations.getInvitationList({ status: "pending", query: email, limit: 10 });
+    const invite = data.find((i) => i.emailAddress.toLowerCase() === email && parseRole(i.publicMetadata?.role));
+    if (!invite) continue;
+    const role = parseRole(invite.publicMetadata?.role)!;
+    await clerk.users.updateUserMetadata(user.id, { publicMetadata: { role } });
+    await clerk.invitations.revokeInvitation(invite.id).catch(() => {});
+    return role;
+  }
+  return null;
+}

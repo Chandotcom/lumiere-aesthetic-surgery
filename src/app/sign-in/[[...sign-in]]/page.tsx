@@ -6,7 +6,7 @@ export default function SignInPage() {
     <main className="flex flex-1 items-center justify-center p-6">
       <Suspense fallback={null}>
         <ClerkProvider>
-          <SignIn />
+          <SignIn signUpUrl="/sign-up" fallbackRedirectUrl="/admin" />
         </ClerkProvider>
       </Suspense>
     </main>

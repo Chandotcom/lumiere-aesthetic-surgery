@@ -90,6 +90,7 @@ const verbs: Record<string, string> = {
   "review.hidden": "Hid a review",
   "review.deleted": "Deleted a review",
   "staff.invited": "Invited a staff member",
+  "staff.invite_claimed": "Joined through an invitation",
   "staff.invitation_revoked": "Revoked an invitation",
   "staff.role_changed": "Changed a staff role",
   "staff.access_removed": "Removed staff access",

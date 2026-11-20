@@ -78,6 +78,7 @@ Middleware is now `src/proxy.ts`. Dynamic data (DB, `auth()`) must sit inside `<
     - **The `/admin` dashboard** redirects roles without "dashboard" to `homeFor(role)`.
   - `AdminNav` only shows allowed items (cosmetic; the server enforces). When adding a section, add a permission, a layout guard and a nav item with that permission.
   - **Staff** (`/admin/users`, admin only): lists Clerk users, invites by email with a role (Clerk invitations, `publicMetadata.role`), changes roles and removes access (`role: null`).
+    - Invitations redirect to our own `/sign-up` (`<SignUp>`, Clerk runs there too: see the proxy matcher). If someone signs up directly instead, `getStaff()` calls `claimPendingInvitation()` (`src/lib/admin/staff.ts`) on their first admin request: a pending invitation for one of their **verified** emails gives them its role and is then revoked (audit `staff.invite_claimed`). Request-derived URLs go through `trustedRequestOrigin()` (`src/lib/request-origin.ts`).
     - You can’t change your own role, and the last admin can’t be demoted.
     - Audit entries never store emails, only Clerk ids.
   - **Start screen** (`/admin`, role-aware):
@@ -170,7 +171,7 @@ The demo is aimed at a **generic/international** market. Show privacy best pract
 - Next.js (App Router) + TypeScript + Tailwind + shadcn/ui, deployed on Vercel.
 - Neon Postgres (via Vercel Marketplace) + Drizzle ORM. Schema goes in `src/db/schema.ts` and the seed script in `src/db/seed.ts`.
 - Clerk for **staff-only** auth (patients never log in). Roles go in `publicMetadata.role` (`admin` | `editor` | `front_desk`; legacy `staff` = front desk). See "Roles & permissions".
-  `src/proxy.ts` runs Clerk **only** on `/admin`, `/sign-in` and `/api/admin`. `ClerkProvider` sits in the admin and sign-in
+  `src/proxy.ts` runs Clerk **only** on `/admin`, `/sign-in`, `/sign-up` and `/api/admin`. `ClerkProvider` sits in the admin and sign-in
   layouts, not the root layout, so public pages stay static and work without Clerk keys.
 - DB access goes through `getDb()` from `src/db/index.ts`. It connects lazily, so the build works without `DATABASE_URL`.
 - The SEO switch is `allowIndexing` in `src/lib/site.ts`, driven by `NEXT_PUBLIC_ALLOW_INDEXING`. It controls root metadata

@@ -8,5 +8,5 @@ export default clerkMiddleware();
 // Run Clerk only on staff routes — public pages never touch auth (faster, and they work
 // even before Clerk keys are configured).
 export const config = {
-  matcher: ["/admin/:path*", "/sign-in/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/sign-in/:path*", "/sign-up/:path*", "/api/admin/:path*"],
 };

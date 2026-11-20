@@ -1,9 +1,8 @@
 import "server-only";
-import { headers } from "next/headers";
 import { after } from "next/server";
 import { procedures } from "@/lib/content/procedures";
 import { getGalleryCases } from "@/lib/gallery/read";
-import { site } from "@/lib/site";
+import { trustedRequestOrigin } from "@/lib/request-origin";
 import { findPagesUsingForm, listDocuments } from "./store";
 import { posts as builtInPosts } from "@/lib/content/journal";
 
@@ -18,7 +17,7 @@ import { posts as builtInPosts } from "@/lib/content/journal";
  * request absorbs the stale copy and starts the rebuild, and the next visitor gets fresh content.
  */
 export async function warmAfterChange(kind: string, key: string) {
-  const origin = await sameSiteOrigin();
+  const origin = await trustedRequestOrigin();
   if (!origin) return;
   after(async () => {
     try {
@@ -28,25 +27,6 @@ export async function warmAfterChange(kind: string, key: string) {
       console.warn("[cms] cache warm-up skipped:", err instanceof Error ? err.message : "unknown error");
     }
   });
-}
-
-/** Only ever fetch our own site: the host the staff member is using, if it's one we know. */
-async function sameSiteOrigin(): Promise<string | null> {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  if (!host) return null;
-  const allowed = new Set(
-    [
-      new URL(site.url).host,
-      process.env.VERCEL_URL,
-      process.env.VERCEL_BRANCH_URL,
-      process.env.VERCEL_PROJECT_PRODUCTION_URL,
-    ].filter(Boolean),
-  );
-  const local = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host);
-  if (!local && !allowed.has(host)) return null;
-  const proto = h.get("x-forwarded-proto") ?? (local ? "http" : "https");
-  return `${proto}://${host}`;
 }
 
 /** Every page under a dynamic route, for changes that show site-wide (contact details, homepage blocks). */
