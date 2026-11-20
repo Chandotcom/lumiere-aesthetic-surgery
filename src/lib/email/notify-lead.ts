@@ -15,6 +15,8 @@ type NewLead = {
   email: string;
   source: string;
   createdAt: Date;
+  /** Set for custom forms (admin → Forms). The form title is not patient data. */
+  formTitle?: string;
   /** From the published contact settings, read in the request before `after()`. */
   settings: { phone: string; notificationEmail: string };
 };
@@ -43,10 +45,11 @@ export async function notifyNewLead(lead: NewLead) {
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean);
     const alert = newLeadAlert({
-      displayName: `${lead.firstName} ${lead.lastName.charAt(0).toUpperCase()}.`,
+      displayName: lead.lastName ? `${lead.firstName} ${lead.lastName.charAt(0).toUpperCase()}.` : lead.firstName,
       receivedAt: formatClinicDateTime(lead.createdAt),
       source: sourceLabel(lead.source),
       leadUrl: new URL(`/admin/leads/${lead.id}`, site.url).toString(),
+      formTitle: lead.formTitle,
     });
     // One message per recipient, so staff addresses aren't shared with each other.
     await Promise.all([...new Set(to)].map((addr) => sendEmail({ to: [addr], ...alert, tag: "lead_alert" })));
@@ -70,7 +73,7 @@ export async function notifyNewLead(lead: NewLead) {
     if (n > 0) return; // already confirmed recently
     await sendEmail({
       to: [lead.email],
-      ...requestReceived({ firstName: lead.firstName, phone: lead.settings.phone, siteUrl: site.url }),
+      ...requestReceived({ firstName: lead.firstName, phone: lead.settings.phone, siteUrl: site.url, isForm: lead.formTitle != null }),
       tag: "request_received",
     });
   } catch (err) {

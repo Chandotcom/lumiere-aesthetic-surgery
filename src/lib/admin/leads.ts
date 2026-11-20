@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, ilike, or, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNotNull, or, type SQL } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 
 import { leadStatuses, type LeadStatus } from "./lead-status";
@@ -22,9 +22,10 @@ function likePattern(q: string) {
 
 export const LEADS_LIMIT = 100;
 
-export async function listLeads({ status, q }: { status?: LeadStatus; q?: string }) {
+export async function listLeads({ status, q, form }: { status?: LeadStatus; q?: string; form?: string }) {
   const filters: SQL[] = [];
   if (status) filters.push(eq(leads.status, status));
+  if (form) filters.push(eq(leads.formSlug, form));
   if (q) {
     const pattern = likePattern(q);
     filters.push(or(ilike(leads.name, pattern), ilike(leads.email, pattern), ilike(leads.phone, pattern))!);
@@ -37,15 +38,26 @@ export async function listLeads({ status, q }: { status?: LeadStatus; q?: string
     .limit(LEADS_LIMIT);
 }
 
-/** Number of leads per status, for the inbox tabs. */
-export async function countLeadsByStatus() {
+/** Number of leads per status, for the inbox tabs (optionally for one form only). */
+export async function countLeadsByStatus(form?: string) {
   const rows = await getDb()
     .select({ status: leads.status, count: count() })
     .from(leads)
+    .where(form ? eq(leads.formSlug, form) : undefined)
     .groupBy(leads.status);
   const counts = Object.fromEntries(leadStatuses.map((s) => [s, 0])) as Record<LeadStatus, number>;
   for (const row of rows) counts[row.status] = row.count;
   return counts;
+}
+
+/** Number of leads each custom form has created, by form slug. */
+export async function countLeadsByForm() {
+  const rows = await getDb()
+    .select({ form: leads.formSlug, count: count() })
+    .from(leads)
+    .where(isNotNull(leads.formSlug))
+    .groupBy(leads.formSlug);
+  return new Map(rows.map((r) => [r.form!, r.count]));
 }
 
 export async function getLead(id: number) {

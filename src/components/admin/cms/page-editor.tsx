@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFieldArray, useForm, useFormContext, useFormState, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +26,8 @@ import { EditorSection as Section } from "./editor-page";
 import { ImageField, ListField, TextField } from "./fields";
 
 type F = PageFields;
+type Option = { slug: string; name: string };
+type Options = { procedureOptions: Option[]; formOptions: Option[] };
 const p = (s: string) => s as Path<F>; // block field paths are built from the index at runtime
 
 const selectClass =
@@ -37,12 +40,12 @@ export function PageEditor({
   initial,
   state,
   procedureOptions,
+  formOptions,
 }: {
   slug: string;
   initial: F;
   state: ContentState;
-  procedureOptions: { slug: string; name: string }[];
-}) {
+} & Options) {
   const form = useForm<F>({ resolver: zodResolver(pageSchema), defaultValues: initial, mode: "onBlur" });
   return (
     <ContentForm
@@ -64,7 +67,7 @@ export function PageEditor({
       </Section>
 
       <Section title="Sections" description="The page is built from these sections, top to bottom. Use the arrows to reorder them.">
-        <BlockList procedureOptions={procedureOptions} />
+        <BlockList procedureOptions={procedureOptions} formOptions={formOptions} />
       </Section>
     </ContentForm>
   );
@@ -83,7 +86,7 @@ function NoindexToggle() {
   );
 }
 
-function BlockList({ procedureOptions }: { procedureOptions: { slug: string; name: string }[] }) {
+function BlockList(options: Options) {
   const { control, getValues } = useFormContext<F>();
   const { fields, append, insert, remove, move } = useFieldArray({ control, name: "blocks" });
   const { errors } = useFormState({ control, name: "blocks" });
@@ -147,7 +150,7 @@ function BlockList({ procedureOptions }: { procedureOptions: { slug: string; nam
                 </div>
               </div>
               <div id={bodyId} hidden={isCollapsed} className="space-y-4 p-4">
-                <BlockFields type={type} i={i} procedureOptions={procedureOptions} />
+                <BlockFields type={type} i={i} {...options} />
               </div>
             </li>
           );
@@ -166,7 +169,11 @@ function BlockList({ procedureOptions }: { procedureOptions: { slug: string; nam
             ))}
           </select>
         </div>
-        <Button type="button" variant="outline" disabled={fields.length >= 20} onClick={() => append(newBlock(adding))}>
+        <Button type="button" variant="outline" disabled={fields.length >= 20} onClick={() => {
+            const block = newBlock(adding);
+            // Start a form section on the first form, so it's valid straight away.
+            append(block.type === "form" ? { ...block, formSlug: options.formOptions[0]?.slug ?? "" } : block);
+          }}>
           <Plus /> Add section
         </Button>
       </div>
@@ -227,7 +234,7 @@ function ProcedurePicker({ i, options }: { i: number; options: { slug: string; n
   );
 }
 
-function BlockFields({ type, i, procedureOptions }: { type: BlockType; i: number; procedureOptions: { slug: string; name: string }[] }) {
+function BlockFields({ type, i, procedureOptions, formOptions }: { type: BlockType; i: number } & Options) {
   const b = `blocks.${i}`;
   switch (type) {
     case "hero":
@@ -354,6 +361,22 @@ function BlockFields({ type, i, procedureOptions }: { type: BlockType; i: number
           <TextField<F> name={p(`${b}.heading`)} label="Heading" maxLength={120} hint={ACCENT_HINT} />
           <TextField<F> name={p(`${b}.intro`)} label="Intro (optional)" multiline rows={2} maxLength={300} />
           <CtaFields base={`${b}.button`} title="Button" />
+        </>
+      );
+    case "form":
+      return formOptions.length === 0 ? (
+        <p className="text-sm text-stone">
+          You don’t have any published forms yet. Create and publish one under{" "}
+          <Link href="/admin/forms" className="text-bronze hover:underline">Forms</Link>, then come back.
+        </p>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ToneSelect i={i} />
+            <Select name={`${b}.formSlug`} label="Form" options={formOptions.map((o) => ({ value: o.slug, label: o.name }))} />
+          </div>
+          <TextField<F> name={p(`${b}.heading`)} label="Heading (optional)" maxLength={120} hint={`Leave empty to use the form’s title. ${ACCENT_HINT}`} />
+          <p className="text-sm text-stone">Only published forms are listed. Submissions go to Leads. Used once per page.</p>
         </>
       );
   }

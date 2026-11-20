@@ -102,13 +102,20 @@ export const blockSchema = z.discriminatedUnion("type", [
     intro: optional(300, "Intro"),
     button: requiredCta,
   }),
+  z.object({
+    type: z.literal("form"),
+    tone,
+    /** Leave empty to use the form's own title. */
+    heading: optionalHeading(),
+    formSlug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Choose a form."),
+  }),
 ]);
 
 export type Block = z.infer<typeof blockSchema>;
 export type BlockType = Block["type"];
 
-/** These sections show site-wide content with fixed anchors, so each may appear once per page. */
-const ONCE: BlockType[] = ["testimonials", "galleryTeaser"];
+/** These sections show site-wide content with fixed anchors (or a form), so each may appear once per page. */
+const ONCE: BlockType[] = ["testimonials", "galleryTeaser", "form"];
 
 export const pageSchema = z.object({
   title: text(120, "Title"),
@@ -133,7 +140,7 @@ export type PageFields = z.infer<typeof pageSchema>;
 // Every existing top-level route, plus words we may want later. Pages live at /<slug>.
 const RESERVED = new Set([
   "about", "procedures", "consultation", "gallery", "blog", "contact", "privacy", "terms", "accessibility",
-  "admin", "sign-in", "sign-up", "api", "new", "sitemap.xml", "robots.txt", "llms.txt", "favicon.ico", "preview",
+  "forms", "admin", "sign-in", "sign-up", "api", "new", "sitemap.xml", "robots.txt", "llms.txt", "favicon.ico", "preview",
 ]);
 
 export const pageSlugSchema = z
@@ -156,9 +163,10 @@ export const blockTypes: Record<BlockType, { label: string; description: string 
   testimonials: { label: "Patient reviews", description: "The published reviews carousel." },
   galleryTeaser: { label: "Before & after preview", description: "The age-gated gallery teaser." },
   cta: { label: "Call to action", description: "A dark closing banner with one button." },
+  form: { label: "Form", description: "One of your forms from Forms. Submissions go to Leads." },
 };
 
-/** Starting values for a newly added section. Every default passes the schema. */
+/** Starting values for a newly added section. Every default passes the schema, except "form", whose formSlug the editor fills in. */
 export function newBlock(type: BlockType): Block {
   switch (type) {
     case "hero":
@@ -220,6 +228,8 @@ export function newBlock(type: BlockType): Block {
         intro: "A private, no-pressure conversation with Dr. Marsh.",
         button: { label: "Request a consultation", href: "/consultation" },
       };
+    case "form":
+      return { type, tone: "alt", heading: "", formSlug: "" };
   }
 }
 

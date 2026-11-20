@@ -5,6 +5,7 @@ import { getProcedure, procedures } from "@/lib/content/procedures";
 import { homeDefaults } from "./home";
 import { procedureToFields } from "./procedures";
 import { isBuiltInPost, postToFields } from "./journal";
+import { formSchema, formSlugSchema } from "./form-schema";
 import { pageSchema, pageSlugSchema } from "./page-schema";
 import { homeSchema, postSchema, postSlugSchema, procedureFieldsSchema, seoSchema, settingsSchema } from "./schemas";
 import { seoDefaults, settingsDefaults } from "./settings";
@@ -70,6 +71,14 @@ export const contentKinds = {
     isKey: (key) => pageSlugSchema.safeParse(key).success,
     defaults: () => null,
     previewPath: (key) => `/${key}`,
+  },
+  form: {
+    label: "Form",
+    schema: formSchema,
+    // Forms exist only once created in the admin; they have no code defaults.
+    isKey: (key) => formSlugSchema.safeParse(key).success,
+    defaults: () => null,
+    previewPath: (key) => `/forms/${key}`,
   },
 } satisfies Record<string, ContentKind>;
 

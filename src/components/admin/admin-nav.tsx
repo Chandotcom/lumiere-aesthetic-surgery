@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
+  ClipboardList,
   FilePenLine,
   GalleryHorizontalEnd,
   History,
@@ -23,6 +24,7 @@ const items: { href: string; label: string; icon: typeof Inbox; permission: Perm
   { href: "/admin/appointments", label: "Appointments", icon: CalendarDays, permission: "appointments" },
   { href: "/admin/content", label: "Pages", icon: FilePenLine, permission: "content" },
   { href: "/admin/content/journal", label: "Journal", icon: Newspaper, permission: "content" },
+  { href: "/admin/forms", label: "Forms", icon: ClipboardList, permission: "content" },
   { href: "/admin/media", label: "Media", icon: Images, permission: "media" },
   { href: "/admin/gallery", label: "Gallery", icon: GalleryHorizontalEnd, permission: "gallery" },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquareQuote, permission: "reviews" },

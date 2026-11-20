@@ -97,6 +97,10 @@ export const leads = pgTable("leads", {
   utmCampaign: text("utm_campaign"),
   referrer: text("referrer"),
   landingPage: text("landing_page"),
+  // Custom forms (admin → Forms): the form's slug (null = consultation form) and the answers that
+  // don't map onto the columns above, with each question's label snapshotted at submission time.
+  formSlug: text("form_slug"),
+  formAnswers: jsonb("form_answers").$type<{ label: string; value: string }[]>(),
   firstRespondedAt: timestamp("first_responded_at", { withTimezone: true }),
   assignedTo: text("assigned_to"), // Clerk user id
   notes: text("notes"),

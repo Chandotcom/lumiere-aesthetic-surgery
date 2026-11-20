@@ -8,7 +8,9 @@ import { Prose } from "@/components/journal/prose";
 import { Reveal } from "@/components/motion/reveal";
 import { ProcedureCard } from "@/components/procedures/procedure-card";
 import { JsonLd } from "@/components/seo/json-ld";
+import { FormRenderer } from "@/components/forms/form-renderer";
 import { ButtonLink } from "@/components/ui/button-link";
+import { getForm } from "@/lib/cms/forms";
 import { getProcedures } from "@/lib/cms/procedures";
 import type { Block } from "@/lib/cms/page-schema";
 import { faqSchema } from "@/lib/seo/schema";
@@ -59,6 +61,8 @@ function BlockView({ block, ctx }: { block: Block; ctx: Ctx }) {
       return <ResultsTeaser />;
     case "cta":
       return <CtaBlock b={block} ctx={ctx} />;
+    case "form":
+      return <FormBlock b={block} ctx={ctx} />;
   }
 }
 
@@ -270,5 +274,29 @@ function CtaBlock({ b, ctx }: { b: Of<"cta">; ctx: Ctx }) {
         </div>
       </Container>
     </section>
+  );
+}
+
+/** One of the forms from admin → Forms. Renders nothing if the form was deleted or unpublished. */
+async function FormBlock({ b, ctx }: { b: Of<"form">; ctx: Ctx }) {
+  const form = await getForm(b.formSlug);
+  if (!form) return null;
+  const dark = b.tone === "dark";
+  return (
+    <Section tone={b.tone} aria-labelledby={`${ctx.id}-heading`} id={ctx.id}>
+      <Container size="wide" className="grid gap-12 lg:grid-cols-12 lg:gap-8">
+        <Reveal className="stack lg:col-span-5 xl:pr-10">
+          <Heading level={ctx.level} id={`${ctx.id}-heading`}>
+            {b.heading ? <Accent text={b.heading} /> : form.title}
+          </Heading>
+          {form.intro && <p className={cn("max-w-md whitespace-pre-line", dark ? "text-ivory/75" : "text-stone")}>{form.intro}</p>}
+        </Reveal>
+        <div className="lg:col-span-7">
+          <div className="border border-line bg-white p-6 text-ink shadow-[0_30px_60px_-40px_rgb(29_27_24/0.3)] sm:p-10">
+            <FormRenderer slug={b.formSlug} form={form} />
+          </div>
+        </div>
+      </Container>
+    </Section>
   );
 }

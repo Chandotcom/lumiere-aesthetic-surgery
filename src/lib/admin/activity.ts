@@ -9,7 +9,7 @@ const { auditLog } = schema;
 export const activitySections = {
   leads: { label: "Leads", entities: ["lead"] },
   appointments: { label: "Appointments", entities: ["appointment"] },
-  content: { label: "Pages & journal", entities: ["procedure", "home", "settings", "seo", "post", "page"] },
+  content: { label: "Pages, journal & forms", entities: ["procedure", "home", "settings", "seo", "post", "page", "form"] },
   media: { label: "Media", entities: ["media"] },
   gallery: { label: "Gallery", entities: ["gallery_item"] },
   reviews: { label: "Reviews", entities: ["review"] },
@@ -67,6 +67,8 @@ const verbs: Record<string, string> = {
   "content.post_deleted": "Deleted a journal post",
   "content.page_created": "Created a page",
   "content.page_deleted": "Deleted a page",
+  "content.form_created": "Created a form",
+  "content.form_deleted": "Deleted a form",
   "media.uploaded": "Uploaded an image",
   "media.alt_updated": "Edited image alt text",
   "media.deleted": "Deleted an image",
@@ -118,6 +120,7 @@ export function describeTarget(entity: string, entityId: string | null): { label
     case "procedure":
     case "post":
     case "page":
+    case "form":
     case "home":
     case "settings":
     case "seo": {

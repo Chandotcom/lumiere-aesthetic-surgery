@@ -78,3 +78,12 @@ export function EditorSection({
     </section>
   );
 }
+
+export function BackToForms() {
+  return (
+    <Link href="/admin/forms" className="inline-flex items-center gap-1.5 text-sm text-stone hover:text-ink">
+      <ArrowLeft className="size-4" aria-hidden />
+      Forms
+    </Link>
+  );
+}

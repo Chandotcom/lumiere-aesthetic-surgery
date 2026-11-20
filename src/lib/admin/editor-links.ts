@@ -14,6 +14,7 @@ export function editorHref(kind: string, key: string): string | undefined {
   if (kind === "procedure") return `/admin/content/procedures/${key}`;
   if (kind === "post") return `/admin/content/journal/${key}`;
   if (kind === "page") return `/admin/content/pages/${key}`;
+  if (kind === "form") return `/admin/forms/${key}`;
   return undefined;
 }
 
@@ -24,5 +25,6 @@ export function documentLabel(kind: string, key: string, title?: unknown): strin
   if (kind === "procedure") return `Procedure: ${getProcedure(key)?.name ?? key}`;
   if (kind === "post") return `Journal: ${name}`;
   if (kind === "page") return `Page: ${name}`;
+  if (kind === "form") return `Form: ${name}`;
   return `${kind}: ${key}`;
 }

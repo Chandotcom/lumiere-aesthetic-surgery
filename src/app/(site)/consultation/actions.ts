@@ -6,6 +6,7 @@ import { getDb, schema } from "@/db";
 import { getSiteSettings } from "@/lib/cms/settings";
 import { notifyNewLead } from "@/lib/email/notify-lead";
 import { serviceGroups } from "@/lib/content/home";
+import { attributionColumns } from "@/lib/validation/attribution";
 import { consultationSchema } from "@/lib/validation/consultation";
 
 /** procedure name → its area (e.g. "Rhinoplasty" → "Face") */
@@ -16,18 +17,6 @@ const procedureArea = new Map(
 export type ConsultationResult =
   | { ok: true; firstName: string; demo?: boolean }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
-
-/** Derive a simple channel label from first-touch attribution. */
-function sourceFrom(utmSource?: string, referrer?: string) {
-  const s = (utmSource || "").toLowerCase();
-  if (s) return s.slice(0, 40);
-  const r = (referrer || "").toLowerCase();
-  if (r.includes("google.")) return "google";
-  if (r.includes("instagram.")) return "instagram";
-  if (r.includes("facebook.") || r.includes("fb.")) return "facebook";
-  if (r.includes("tiktok.")) return "tiktok";
-  return r ? "referral" : "website";
-}
 
 export async function submitConsultation(input: unknown): Promise<ConsultationResult> {
   const parsed = consultationSchema.safeParse(input);
@@ -70,12 +59,7 @@ export async function submitConsultation(input: unknown): Promise<ConsultationRe
         message: d.message || null,
         smsConsent: d.smsConsent,
         marketingConsent: d.marketingConsent,
-        source: sourceFrom(d.utmSource, d.referrer),
-        utmSource: d.utmSource || null,
-        utmMedium: d.utmMedium || null,
-        utmCampaign: d.utmCampaign || null,
-        referrer: d.referrer || null,
-        landingPage: d.landingPage || null,
+        ...attributionColumns(d),
       })
       .returning({ id: schema.leads.id, createdAt: schema.leads.createdAt, source: schema.leads.source });
   } catch (err) {

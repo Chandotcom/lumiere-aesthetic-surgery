@@ -106,3 +106,17 @@ export async function getRevisionData(kind: string, key: string, revisionId: num
     .limit(1);
   return row?.data ?? null;
 }
+
+/** Custom pages (draft or live) with a "Form" section that uses this form. */
+export async function findPagesUsingForm(formSlug: string) {
+  const probe = JSON.stringify({ blocks: [{ type: "form", formSlug }] });
+  return getDb()
+    .select({ key: docs.key, draft: docs.draft, published: docs.published })
+    .from(docs)
+    .where(
+      and(
+        eq(docs.kind, "page"),
+        sql`(${docs.draft} @> ${probe}::jsonb or ${docs.published} @> ${probe}::jsonb)`,
+      ),
+    );
+}

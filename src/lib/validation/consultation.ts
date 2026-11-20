@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { attributionShape } from "./attribution";
 
 // Shared by the client form (instant feedback) and the server action (source of truth).
 
@@ -49,12 +50,7 @@ export const consultationSchema = z
     privacyAccepted: z.literal(true, { error: "Please accept the privacy policy to continue" }),
 
     // Attribution (captured client-side, first touch) + honeypot
-    utmSource: z.string().max(100).optional(),
-    utmMedium: z.string().max(100).optional(),
-    utmCampaign: z.string().max(150).optional(),
-    referrer: z.string().max(500).optional(),
-    landingPage: z.string().max(500).optional(),
-    company: z.string().max(0).optional(), // must stay empty — bots fill it
+    ...attributionShape,
   })
   // A phone number is required if they want a call/text or agreed to SMS reminders.
   .refine((d) => (d.contactMethod === "email" && !d.smsConsent) || d.phone !== "", {

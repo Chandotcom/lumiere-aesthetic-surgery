@@ -21,6 +21,7 @@ import {
 } from "@/lib/admin/format";
 import { getLead, isSampleLead, listLeadAppointments } from "@/lib/admin/leads";
 import { getStaff } from "@/lib/admin/session";
+import { listFormTitles } from "@/lib/cms/forms";
 
 export const metadata: Metadata = { title: "Lead" };
 
@@ -43,12 +44,13 @@ export default function LeadPage({ params }: PageProps<"/admin/leads/[id]">) {
 
 async function loadLead(id: number) {
   await connection();
-  const [lead, appointments, staff] = await Promise.all([
+  const [lead, appointments, staff, formTitles] = await Promise.all([
     getLead(id),
     listLeadAppointments(id),
     getStaff(),
+    listFormTitles(),
   ]);
-  return { lead, appointments, staff, now: Date.now() };
+  return { lead, appointments, staff, formTitles, now: Date.now() };
 }
 
 async function LeadDetail({ params }: Pick<PageProps<"/admin/leads/[id]">, "params">) {
@@ -58,19 +60,30 @@ async function LeadDetail({ params }: Pick<PageProps<"/admin/leads/[id]">, "para
   const id = Number(rawId);
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
 
-  const { lead, appointments, staff, now } = await loadLead(id);
+  const { lead, appointments, staff, formTitles, now } = await loadLead(id);
   if (!lead) notFound();
 
-  const facts: [string, React.ReactNode][] = [
+  const contact: [string, React.ReactNode][] = [
     ["Email", <a key="e" href={`mailto:${lead.email}`} className="text-bronze hover:underline">{lead.email}</a>],
     ["Phone", lead.phone ? <a key="p" href={`tel:${lead.phone}`} className="text-bronze hover:underline">{lead.phone}</a> : "—"],
-    ["Prefers", contactMethodLabel(lead.contactMethod)],
-    ["Interest", lead.procedureInterest ?? "—"],
-    ["Consultation", consultTypeLabel(lead.consultType)],
-    ["Timeframe", timeframeLabel(lead.timeframe)],
-    ["SMS consent", lead.smsConsent ? "Yes" : "No"],
-    ["Marketing consent", lead.marketingConsent ? "Yes" : "No"],
   ];
+  // Custom-form leads have no consultation fields; their answers are listed separately.
+  const facts: [string, React.ReactNode][] = lead.formSlug
+    ? [
+        ...contact,
+        ["Form", formTitles.get(lead.formSlug) ?? lead.formSlug],
+        ["Marketing consent", lead.marketingConsent ? "Yes" : "No"],
+      ]
+    : [
+        ...contact,
+        ["Prefers", contactMethodLabel(lead.contactMethod)],
+        ["Interest", lead.procedureInterest ?? "—"],
+        ["Consultation", consultTypeLabel(lead.consultType)],
+        ["Timeframe", timeframeLabel(lead.timeframe)],
+        ["SMS consent", lead.smsConsent ? "Yes" : "No"],
+        ["Marketing consent", lead.marketingConsent ? "Yes" : "No"],
+      ];
+  const answers = lead.formAnswers ?? [];
 
   const attribution: [string, string | null][] = [
     ["Source", lead.source],
@@ -106,6 +119,24 @@ async function LeadDetail({ params }: Pick<PageProps<"/admin/leads/[id]">, "para
             ))}
           </dl>
         </section>
+
+        {lead.formSlug && (
+          <section aria-labelledby="answers" className="space-y-3">
+            <h2 id="answers" className="font-heading text-lg">Answers</h2>
+            {answers.length === 0 ? (
+              <p className="text-sm text-stone">No other questions were answered.</p>
+            ) : (
+              <dl className="divide-y divide-line rounded-sm border border-line text-sm">
+                {answers.map((a, i) => (
+                  <div key={`${i}-${a.label}`} className="grid gap-1 p-3 sm:grid-cols-[14rem_1fr] sm:gap-4">
+                    <dt className="text-stone">{a.label}</dt>
+                    <dd className="break-words whitespace-pre-wrap">{a.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </section>
+        )}
 
         <section aria-labelledby="message" className="space-y-3">
           <h2 id="message" className="font-heading text-lg">Message</h2>

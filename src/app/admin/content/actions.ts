@@ -6,13 +6,15 @@ import { ActionError, runStaffAction, type ActionResult } from "@/lib/admin/acti
 import { logAudit } from "@/lib/admin/audit";
 import { clinicDayKey } from "@/lib/admin/time";
 import { isBuiltInPost, newPostFields } from "@/lib/cms/journal";
-import { newPageFields, pageSlugSchema } from "@/lib/cms/page-schema";
+import { formSlugSchema, newFormFields } from "@/lib/cms/form-schema";
+import { newPageFields, pageSchema, pageSlugSchema } from "@/lib/cms/page-schema";
 import { cmsTag } from "@/lib/cms/read";
 import { resolveKind } from "@/lib/cms/registry";
 import { postSlugSchema } from "@/lib/cms/schemas";
 import {
   deleteDocument,
   discardDraft,
+  findPagesUsingForm,
   getDocument,
   getRevisionData,
   publishDraft,
@@ -122,6 +124,41 @@ export async function deletePage(slug: string): Promise<ActionResult> {
     await deleteDocument("page", slug);
     updateTag(cmsTag("page"));
     await logAudit(staffId, "content.page_deleted", "page", slug);
+  });
+}
+
+/** Start a new form as a draft, with name, email and message questions. The address can't change afterwards. */
+export async function createForm(slug: string, title: string): Promise<ActionResult> {
+  const s = formSlugSchema.safeParse(slug);
+  if (!s.success) return { ok: false, error: s.error.issues[0]?.message ?? "Invalid address." };
+  const t = z.string().trim().min(1, "Enter a title.").max(120).safeParse(title);
+  if (!t.success) return { ok: false, error: t.error.issues[0]?.message ?? "Invalid title." };
+  return run(async (staffId) => {
+    if (await getDocument("form", s.data)) throw new ActionError("A form with this address already exists. Choose another.");
+    await saveDraft("form", s.data, newFormFields(t.data), staffId);
+    await logAudit(staffId, "content.form_created", "form", s.data);
+  });
+}
+
+/**
+ * Permanently delete a form and its versions. Refused while a page still uses it, so a live page
+ * never loses its form silently. Leads it already created keep their answers.
+ */
+export async function deleteForm(slug: string): Promise<ActionResult> {
+  return run(async (staffId) => {
+    kindOrThrow("form", slug);
+    if (!(await getDocument("form", slug))) throw new ActionError("This form no longer exists.");
+    const pages = await findPagesUsingForm(slug);
+    if (pages.length) {
+      const names = pages.map((pg) => {
+        const data = pageSchema.safeParse(pg.draft ?? pg.published);
+        return `“${data.success ? data.data.title : pg.key}”`;
+      });
+      throw new ActionError(`This form is used on ${names.join(", ")}. Remove the Form section there first.`);
+    }
+    await deleteDocument("form", slug);
+    updateTag(cmsTag("form"));
+    await logAudit(staffId, "content.form_deleted", "form", slug);
   });
 }
 
