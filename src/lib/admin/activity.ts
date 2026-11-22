@@ -61,6 +61,7 @@ const verbs: Record<string, string> = {
   "appointment.rescheduled": "Rescheduled an appointment",
   "content.draft_saved": "Saved a draft",
   "content.published": "Published changes",
+  "content.demo_previewed": "Previewed changes (demo)",
   "content.draft_discarded": "Discarded a draft",
   "content.reverted_to_default": "Reverted a page to its default",
   "content.revision_restored": "Restored an earlier version",

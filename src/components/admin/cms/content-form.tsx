@@ -73,12 +73,24 @@ export function ContentForm<T extends FieldValues>({
     () => toast.error("Please fix the highlighted fields."),
   );
 
+  const previewHref = `/api/admin/preview?kind=${encodeURIComponent(kind)}&key=${encodeURIComponent(contentKey)}`;
+
   const publish = form.handleSubmit(
-    (data) => run(() => publishContent(kind, contentKey, data), "Published. The live page is updated.", () => form.reset(data)),
+    (data) =>
+      startTransition(async () => {
+        const result = await publishContent(kind, contentKey, data);
+        if (!result.ok) return void toast.error(result.error);
+        form.reset(data);
+        if (result.previewOnly) {
+          // Demo accounts: nothing went live; the change shows only in their own preview.
+          toast.success("Demo: saved as a preview that only you can see. The live site stays the same.", {
+            duration: 10_000,
+            action: { label: "Open preview", onClick: () => window.open(previewHref, "_blank", "noopener") },
+          });
+        } else toast.success("Published. The live page is updated.");
+      }),
     () => toast.error("Please fix the highlighted fields."),
   );
-
-  const previewHref = `/api/admin/preview?kind=${encodeURIComponent(kind)}&key=${encodeURIComponent(contentKey)}`;
 
   return (
     <FormProvider {...form}>

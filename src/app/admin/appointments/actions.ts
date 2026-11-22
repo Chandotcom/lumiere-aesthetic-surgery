@@ -6,6 +6,7 @@ import { getDb, schema } from "@/db";
 import { ActionError, runStaffAction, type ActionResult } from "@/lib/admin/action";
 import { appointmentStatuses, appointmentTypes } from "@/lib/admin/appointment-meta";
 import { logAudit } from "@/lib/admin/audit";
+import { assertAppointmentInScope, assertLeadInScope } from "@/lib/admin/lead-scope";
 import { clinicTimeToDate } from "@/lib/admin/time";
 
 const { appointments, leads } = schema;
@@ -54,7 +55,8 @@ export async function bookAppointment(input: BookInput): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
   const d = parsed.data;
 
-  return runStaffAction("appointments", async (staffId) => {
+  return runStaffAction("appointments", async (staffId, staff) => {
+    await assertLeadInScope(staff, d.leadId);
     const [startsAt, endsAt] = toRange(d.date, d.time, d.durationMin);
     const db = getDb();
 
@@ -87,7 +89,7 @@ export async function bookAppointment(input: BookInput): Promise<ActionResult> {
       .where(and(eq(leads.id, d.leadId), isNull(leads.firstRespondedAt)));
 
     await logAudit(staffId, `appointment.booked:${d.type}`, "appointment", created?.id);
-  });
+  }, { demo: "allow" });
 }
 
 /** Record the outcome (completed / no-show / cancelled), or set it back to scheduled. */
@@ -96,7 +98,8 @@ export async function updateAppointmentStatus(appointmentId: number, status: str
   if (!parsed.success) return { ok: false, error: "Invalid status." };
   const d = parsed.data;
 
-  return runStaffAction("appointments", async (staffId) => {
+  return runStaffAction("appointments", async (staffId, staff) => {
+    await assertAppointmentInScope(staff, d.id);
     const updated = await getDb()
       .update(appointments)
       .set({ status: d.status })
@@ -104,7 +107,7 @@ export async function updateAppointmentStatus(appointmentId: number, status: str
       .returning({ id: appointments.id });
     if (!updated.length) throw new ActionError("This appointment no longer exists.");
     await logAudit(staffId, `appointment.status_changed:${d.status}`, "appointment", d.id);
-  });
+  }, { demo: "allow" });
 }
 
 /** Move an appointment to a new slot. It goes back to "scheduled". */
@@ -113,7 +116,8 @@ export async function rescheduleAppointment(appointmentId: number, slot: SlotInp
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
   const d = parsed.data;
 
-  return runStaffAction("appointments", async (staffId) => {
+  return runStaffAction("appointments", async (staffId, staff) => {
+    await assertAppointmentInScope(staff, d.id);
     const [startsAt, endsAt] = toRange(d.date, d.time, d.durationMin);
     const updated = await getDb()
       .update(appointments)
@@ -122,5 +126,5 @@ export async function rescheduleAppointment(appointmentId: number, slot: SlotInp
       .returning({ id: appointments.id });
     if (!updated.length) throw new ActionError("This appointment no longer exists.");
     await logAudit(staffId, "appointment.rescheduled", "appointment", d.id);
-  });
+  }, { demo: "allow" });
 }

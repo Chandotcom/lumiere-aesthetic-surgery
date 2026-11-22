@@ -1,5 +1,7 @@
 import { issueSignedToken } from "@vercel/blob";
 import { handleUploadPresigned, type HandleUploadPresignedBody } from "@vercel/blob/client";
+import { DEMO_BLOCKED } from "@/lib/admin/action";
+import { isDemo } from "@/lib/admin/roles";
 import { getStaffWith } from "@/lib/admin/session";
 import { mediaToken } from "@/lib/admin/media";
 import { MEDIA_FOLDER, MEDIA_MAX_BYTES, MEDIA_TYPES } from "@/lib/admin/media-meta";
@@ -26,7 +28,9 @@ export async function POST(request: Request) {
       request,
       webhookPublicKey: process.env.BLOB_WEBHOOK_PUBLIC_KEY || "callbacks-disabled",
       getSignedToken: async (pathname) => {
-        if (!(await getStaffWith("media"))) throw new Error("Unauthorized");
+        const staff = await getStaffWith("media");
+        if (!staff) throw new Error("Unauthorized");
+        if (isDemo(staff.role)) throw new Error(DEMO_BLOCKED); // uploads would reach the real stores
         if (!pathname.startsWith(MEDIA_FOLDER) || pathname.includes("..")) throw new Error("Invalid upload path");
         const rules = { allowedContentTypes: [...MEDIA_TYPES], maximumSizeInBytes: MEDIA_MAX_BYTES };
         const token = await issueSignedToken({

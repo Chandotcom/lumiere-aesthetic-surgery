@@ -1,6 +1,7 @@
 import "server-only";
 import { and, count, desc, eq, ilike, isNotNull, or, type SQL } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { leadScope } from "./lead-scope";
 
 import { leadStatuses, type LeadStatus } from "./lead-status";
 
@@ -24,6 +25,8 @@ export const LEADS_LIMIT = 100;
 
 export async function listLeads({ status, q, form }: { status?: LeadStatus; q?: string; form?: string }) {
   const filters: SQL[] = [];
+  const scope = await leadScope();
+  if (scope) filters.push(scope);
   if (status) filters.push(eq(leads.status, status));
   if (form) filters.push(eq(leads.formSlug, form));
   if (q) {
@@ -43,7 +46,7 @@ export async function countLeadsByStatus(form?: string) {
   const rows = await getDb()
     .select({ status: leads.status, count: count() })
     .from(leads)
-    .where(form ? eq(leads.formSlug, form) : undefined)
+    .where(and(form ? eq(leads.formSlug, form) : undefined, await leadScope()))
     .groupBy(leads.status);
   const counts = Object.fromEntries(leadStatuses.map((s) => [s, 0])) as Record<LeadStatus, number>;
   for (const row of rows) counts[row.status] = row.count;
@@ -55,13 +58,13 @@ export async function countLeadsByForm() {
   const rows = await getDb()
     .select({ form: leads.formSlug, count: count() })
     .from(leads)
-    .where(isNotNull(leads.formSlug))
+    .where(and(isNotNull(leads.formSlug), await leadScope()))
     .groupBy(leads.formSlug);
   return new Map(rows.map((r) => [r.form!, r.count]));
 }
 
 export async function getLead(id: number) {
-  const [lead] = await getDb().select().from(leads).where(eq(leads.id, id)).limit(1);
+  const [lead] = await getDb().select().from(leads).where(and(eq(leads.id, id), await leadScope())).limit(1);
   return lead ?? null;
 }
 

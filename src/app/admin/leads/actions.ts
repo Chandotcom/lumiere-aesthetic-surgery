@@ -7,6 +7,7 @@ import { getDb, schema } from "@/db";
 import { ActionError, runStaffAction, type ActionResult } from "@/lib/admin/action";
 import { logAudit } from "@/lib/admin/audit";
 import { isSampleLead, leadStatuses } from "@/lib/admin/lead-status";
+import { assertLeadInScope } from "@/lib/admin/lead-scope";
 import { requireStaff } from "@/lib/admin/session";
 
 const { leads } = schema;
@@ -15,13 +16,24 @@ const leadId = z.coerce.number().int().positive();
 
 const run = (fn: (staffId: string) => Promise<void>) => runStaffAction("leads", fn);
 
+/** For changes to one lead. Demo accounts may make them too, on leads they can see. */
+const runOnLead = (leadIdValue: number, fn: (staffId: string) => Promise<void>) =>
+  runStaffAction(
+    "leads",
+    async (staffId, staff) => {
+      await assertLeadInScope(staff, leadIdValue);
+      await fn(staffId);
+    },
+    { demo: "allow" },
+  );
+
 /** Change a lead's pipeline status. Leaving "new" also counts as the first response. */
 export async function updateLeadStatus(id: number, status: string): Promise<ActionResult> {
   const parsed = z.object({ id: leadId, status: z.enum(leadStatuses) }).safeParse({ id, status });
   if (!parsed.success) return { ok: false, error: "Invalid status." };
   const d = parsed.data;
 
-  return run(async (staffId) => {
+  return runOnLead(d.id, async (staffId) => {
     const db = getDb();
     await db.update(leads).set({ status: d.status }).where(eq(leads.id, d.id));
     if (d.status !== "new") {
@@ -39,7 +51,7 @@ export async function markLeadResponded(id: number): Promise<ActionResult> {
   const parsed = leadId.safeParse(id);
   if (!parsed.success) return { ok: false, error: "Invalid lead." };
 
-  return run(async (staffId) => {
+  return runOnLead(parsed.data, async (staffId) => {
     await getDb()
       .update(leads)
       .set({ firstRespondedAt: new Date() })
@@ -56,7 +68,7 @@ export async function saveLeadNotes(id: number, notes: string): Promise<ActionRe
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid notes." };
   const d = parsed.data;
 
-  return run(async (staffId) => {
+  return runOnLead(d.id, async (staffId) => {
     await getDb().update(leads).set({ notes: d.notes || null }).where(eq(leads.id, d.id));
     await logAudit(staffId, "lead.notes_updated", "lead", d.id);
   });
@@ -67,7 +79,7 @@ export async function assignLeadToMe(id: number, assign: boolean): Promise<Actio
   const parsed = leadId.safeParse(id);
   if (!parsed.success) return { ok: false, error: "Invalid lead." };
 
-  return run(async (staffId) => {
+  return runOnLead(parsed.data, async (staffId) => {
     await getDb()
       .update(leads)
       .set({ assignedTo: assign ? staffId : null })

@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 import { z } from "zod";
 import { ActionError, runStaffAction, type ActionResult } from "@/lib/admin/action";
 import { logAudit } from "@/lib/admin/audit";
+import { isDemo } from "@/lib/admin/roles";
 import { clinicDayKey } from "@/lib/admin/time";
 import { isBuiltInPost, newPostFields } from "@/lib/cms/journal";
 import { formSlugSchema, newFormFields } from "@/lib/cms/form-schema";
@@ -40,28 +41,46 @@ function validate(kind: string, key: string, data: unknown) {
 
 const run = (fn: (staffId: string) => Promise<void>) => runStaffAction("content", fn);
 
+/** Draft-only changes, which never reach the public site: demo accounts may make them too. */
+const runDraft = (fn: (staffId: string) => Promise<void>) => runStaffAction("content", fn, { demo: "allow" });
+
 /** Save edits as a draft. Only visible in preview until published. */
 export async function saveContentDraft(kind: string, key: string, data: unknown): Promise<ActionResult> {
-  return run(async (staffId) => {
+  return runDraft(async (staffId) => {
     await saveDraft(kind, key, validate(kind, key, data), staffId);
     await logAudit(staffId, "content.draft_saved", kind, key);
   });
 }
 
-/** Save the given edits (if any) and publish them to the public site. */
+/**
+ * Save the given edits (if any) and publish them to the public site.
+ * Demo accounts only save a draft and get `previewOnly`: the editor then offers the preview, which
+ * shows the change on the real pages to them alone. The nightly reset discards those drafts.
+ */
 export async function publishContent(kind: string, key: string, data?: unknown): Promise<ActionResult> {
-  return run(async (staffId) => {
-    if (data !== undefined) await saveDraft(kind, key, validate(kind, key, data), staffId);
-    else kindOrThrow(kind, key);
-    if (!(await publishDraft(kind, key, staffId))) throw new ActionError("There are no changes to publish.");
-    updateTag(cmsTag(kind));
-    await warmAfterChange(kind, key);
-    await logAudit(staffId, "content.published", kind, key);
-  });
+  let previewOnly = false;
+  const result = await runStaffAction(
+    "content",
+    async (staffId, staff) => {
+      if (data !== undefined) await saveDraft(kind, key, validate(kind, key, data), staffId);
+      else kindOrThrow(kind, key);
+      if (isDemo(staff.role)) {
+        previewOnly = true;
+        await logAudit(staffId, "content.demo_previewed", kind, key);
+        return;
+      }
+      if (!(await publishDraft(kind, key, staffId))) throw new ActionError("There are no changes to publish.");
+      updateTag(cmsTag(kind));
+      await warmAfterChange(kind, key);
+      await logAudit(staffId, "content.published", kind, key);
+    },
+    { demo: "allow" },
+  );
+  return result.ok && previewOnly ? { ok: true, previewOnly } : result;
 }
 
 export async function discardContentDraft(kind: string, key: string): Promise<ActionResult> {
-  return run(async (staffId) => {
+  return runDraft(async (staffId) => {
     kindOrThrow(kind, key);
     await discardDraft(kind, key);
     await logAudit(staffId, "content.draft_discarded", kind, key);

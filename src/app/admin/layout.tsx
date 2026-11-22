@@ -3,7 +3,7 @@ import { ClerkProvider, SignOutButton, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Button } from "@/components/ui/button";
-import { roleLabel } from "@/lib/admin/roles";
+import { isDemo, roleLabel } from "@/lib/admin/roles";
 import { getStaff, type Staff } from "@/lib/admin/session";
 
 // Clerk is scoped to staff routes so the public site stays static (better SEO + speed).
@@ -21,6 +21,13 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
                 <UserButton />
               </span>
             </header>
+            {isDemo(staff.role) && (
+              <p role="note" className="border-b border-line bg-cream px-6 py-2.5 text-sm">
+                <strong className="font-medium">You&rsquo;re trying the demo.</strong> The enquiries are samples. Try
+                anything: Publish shows your change in a preview only you can see, and everything resets every night.
+                Please don&rsquo;t enter real patient details.
+              </p>
+            )}
             <div className="flex flex-1 flex-col md:flex-row">
               <aside className="border-b border-line p-3 md:w-56 md:shrink-0 md:border-r md:border-b-0">
                 <AdminNav role={staff.role} />

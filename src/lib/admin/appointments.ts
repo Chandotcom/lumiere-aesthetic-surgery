@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, count, desc, eq, gte, lt, type SQL } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { leadScope } from "./lead-scope";
 import type { AppointmentStatus, AppointmentType } from "./appointment-meta";
 
 export * from "./appointment-meta";
@@ -30,6 +31,8 @@ export async function listAppointments({
 }) {
   const filters: SQL[] = [view === "upcoming" ? gte(appointments.startsAt, now) : lt(appointments.startsAt, now)];
   if (type) filters.push(eq(appointments.type, type));
+  const scope = await leadScope();
+  if (scope) filters.push(scope);
 
   return getDb()
     .select({
@@ -56,7 +59,8 @@ export async function countMissingOutcomes(now: Date) {
   const [row] = await getDb()
     .select({ n: count() })
     .from(appointments)
-    .where(and(lt(appointments.startsAt, now), eq(appointments.status, "scheduled")));
+    .innerJoin(leads, eq(appointments.leadId, leads.id))
+    .where(and(lt(appointments.startsAt, now), eq(appointments.status, "scheduled"), await leadScope()));
   return row?.n ?? 0;
 }
 

@@ -1,7 +1,7 @@
 import "server-only";
 import { and, count, eq, gte, ne } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import { can } from "@/lib/admin/roles";
+import { can, isDemo } from "@/lib/admin/roles";
 import { listStaff } from "@/lib/admin/staff";
 import { formatClinicDateTime } from "@/lib/admin/time";
 import { site } from "@/lib/site";
@@ -40,7 +40,8 @@ export async function notifyNewLead(lead: NewLead) {
     const team = await listStaff().catch(() => []);
     const to = [
       lead.settings.notificationEmail,
-      ...team.filter((m) => can(m.role, "leads")).map((m) => m.email),
+      // Demo accounts (prospects trying the admin) never get real enquiry alerts.
+      ...team.filter((m) => can(m.role, "leads") && !isDemo(m.role)).map((m) => m.email),
     ]
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean);

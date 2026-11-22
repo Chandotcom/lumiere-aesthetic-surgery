@@ -1,5 +1,7 @@
 import { issueSignedToken } from "@vercel/blob";
 import { handleUploadPresigned, type HandleUploadPresignedBody } from "@vercel/blob/client";
+import { DEMO_BLOCKED } from "@/lib/admin/action";
+import { isDemo } from "@/lib/admin/roles";
 import { getStaffWith } from "@/lib/admin/session";
 import { GALLERY_FOLDER, GALLERY_MAX_BYTES, GALLERY_PHOTO_TYPES } from "@/lib/gallery/meta";
 import { galleryBlob } from "@/lib/gallery/store";
@@ -20,7 +22,9 @@ export async function POST(request: Request) {
       request,
       webhookPublicKey: process.env.GALLERY_WEBHOOK_PUBLIC_KEY || "callbacks-disabled",
       getSignedToken: async (pathname) => {
-        if (!(await getStaffWith("gallery"))) throw new Error("Unauthorized");
+        const staff = await getStaffWith("gallery");
+        if (!staff) throw new Error("Unauthorized");
+        if (isDemo(staff.role)) throw new Error(DEMO_BLOCKED); // uploads would reach the real stores
         if (!/^gallery\/cases\/\d+\/[\w.-]+$/.test(pathname) || !pathname.startsWith(GALLERY_FOLDER)) {
           throw new Error("Invalid upload path");
         }
