@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   assignLeadToMe,
+  deleteLead,
   markLeadResponded,
   saveLeadNotes,
   updateLeadStatus,
@@ -21,13 +22,16 @@ type Props = {
   responded: boolean;
   assignedToMe: boolean;
   assignedToOther: boolean;
+  /** An admin viewing a sample lead: show "Delete lead". */
+  canDelete: boolean;
 };
 
 const statuses = Object.keys(leadStatusLabel) as LeadStatus[];
 
-export function LeadActions({ leadId, status, notes, responded, assignedToMe, assignedToOther }: Props) {
+export function LeadActions({ leadId, status, notes, responded, assignedToMe, assignedToOther, canDelete }: Props) {
   const [pending, startTransition] = useTransition();
   const [draft, setDraft] = useState(notes);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   function run(action: () => Promise<ActionResult>, success: string) {
     startTransition(async () => {
@@ -102,6 +106,34 @@ export function LeadActions({ leadId, status, notes, responded, assignedToMe, as
           Save notes
         </Button>
       </form>
+
+      {canDelete && (
+        <div className="border-t border-line pt-4">
+          {confirmDelete ? (
+            <div className="space-y-2">
+              <p className="text-sm text-stone">
+                Delete this sample lead and its appointments permanently? This can’t be undone.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="destructive"
+                  disabled={pending}
+                  onClick={() => run(() => deleteLead(leadId), "Lead deleted")}
+                >
+                  Delete permanently
+                </Button>
+                <Button variant="ghost" disabled={pending} onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="ghost" className="text-destructive" disabled={pending} onClick={() => setConfirmDelete(true)}>
+              Delete lead…
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

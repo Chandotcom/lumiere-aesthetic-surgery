@@ -1,11 +1,13 @@
 "use server";
 
 import { and, eq, isNull } from "drizzle-orm";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getDb, schema } from "@/db";
-import { runStaffAction, type ActionResult } from "@/lib/admin/action";
+import { ActionError, runStaffAction, type ActionResult } from "@/lib/admin/action";
 import { logAudit } from "@/lib/admin/audit";
-import { leadStatuses } from "@/lib/admin/lead-status";
+import { isSampleLead, leadStatuses } from "@/lib/admin/lead-status";
+import { requireStaff } from "@/lib/admin/session";
 
 const { leads } = schema;
 
@@ -72,4 +74,26 @@ export async function assignLeadToMe(id: number, assign: boolean): Promise<Actio
       .where(eq(leads.id, parsed.data));
     await logAudit(staffId, assign ? "lead.assigned" : "lead.unassigned", "lead", parsed.data);
   });
+}
+
+/**
+ * Permanently delete a SAMPLE lead (an @example.com address from `pnpm db:seed:demo`) and its
+ * appointments (they cascade). Admins only. Real enquiries are never deleted here: they're
+ * part of the clinic's records, so staff mark them "lost" instead.
+ */
+export async function deleteLead(id: number): Promise<ActionResult> {
+  const parsed = leadId.safeParse(id);
+  if (!parsed.success) return { ok: false, error: "Invalid lead." };
+
+  const result = await run(async (staffId) => {
+    if ((await requireStaff()).role !== "admin") throw new ActionError("Only admins can delete leads.");
+    const db = getDb();
+    const [lead] = await db.select({ email: leads.email }).from(leads).where(eq(leads.id, parsed.data)).limit(1);
+    if (!lead) throw new ActionError("This lead no longer exists.");
+    if (!isSampleLead(lead.email)) throw new ActionError("Only sample leads can be deleted.");
+    await db.delete(leads).where(eq(leads.id, parsed.data));
+    await logAudit(staffId, "lead.deleted", "lead", parsed.data);
+  });
+  if (!result.ok) return result;
+  redirect("/admin/leads");
 }

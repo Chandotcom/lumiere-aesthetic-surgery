@@ -138,7 +138,8 @@ export const pageSchema = z.object({
 export type PageFields = z.infer<typeof pageSchema>;
 
 // Every existing top-level route, plus words we may want later. Pages live at /<slug>.
-const RESERVED = new Set([
+/** Top-level names used by fixed routes and files. Proxy never 404s these. */
+export const RESERVED_SLUGS = new Set([
   "about", "procedures", "consultation", "gallery", "blog", "contact", "privacy", "terms", "accessibility",
   "forms", "admin", "sign-in", "sign-up", "api", "new", "sitemap.xml", "robots.txt", "llms.txt", "favicon.ico", "preview",
 ]);
@@ -149,7 +150,7 @@ export const pageSlugSchema = z
   .min(3, "Use at least 3 characters.")
   .max(60, "Keep the address under 60 characters.")
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers and single hyphens, e.g. spring-offer.")
-  .refine((s) => !RESERVED.has(s), "This address is already used by the site. Choose another.");
+  .refine((s) => !RESERVED_SLUGS.has(s), "This address is already used by the site. Choose another.");
 
 /** The section types staff can add, with a short description for the "Add section" menu. */
 export const blockTypes: Record<BlockType, { label: string; description: string }> = {

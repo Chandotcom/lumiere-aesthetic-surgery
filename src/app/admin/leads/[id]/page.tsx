@@ -214,6 +214,7 @@ async function LeadDetail({ params }: Pick<PageProps<"/admin/leads/[id]">, "para
           responded={lead.firstRespondedAt != null}
           assignedToMe={staff != null && lead.assignedTo === staff.id}
           assignedToOther={lead.assignedTo != null && lead.assignedTo !== staff?.id}
+          canDelete={staff?.role === "admin" && isSampleLead(lead.email)}
         />
       </aside>
     </div>

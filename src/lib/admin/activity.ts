@@ -55,6 +55,7 @@ const verbs: Record<string, string> = {
   "lead.notes_updated": "Updated lead notes",
   "lead.assigned": "Took a lead",
   "lead.unassigned": "Unassigned a lead",
+  "lead.deleted": "Deleted a sample lead",
   "appointment.booked": "Booked an appointment",
   "appointment.status_changed": "Set an appointment outcome",
   "appointment.rescheduled": "Rescheduled an appointment",
